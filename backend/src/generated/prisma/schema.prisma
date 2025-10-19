@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  buyer
+  seller
+  rep
+  admin
+}
+
+enum AuctionStatus {
+  active
+  closed
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  // Relations
+  auctions AuctionItem[] @relation("SellerAuctions")
+  bids     Bid[]
+
+  @@map("users")
+}
+
+model AuctionItem {
+  id            String        @id @default(cuid())
+  sellerId      String        @map("seller_id")
+  title         String
+  description   String
+  category      String?
+  startingPrice Float         @map("starting_price")
+  currentPrice  Float         @map("current_price")
+  endsAt        DateTime      @map("ends_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  status        AuctionStatus @default(active)
+
+  // Relations
+  seller User  @relation("SellerAuctions", fields: [sellerId], references: [id])
+  bids   Bid[]
+
+  @@map("auction_items")
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  auctionId String   @map("auction_id")
+  buyerId   String   @map("buyer_id")
+  bidAmount Float    @map("bid_amount")
+  timestamp DateTime @default(now())
+
+  // Relations
+  auction AuctionItem @relation(fields: [auctionId], references: [id])
+  buyer   User        @relation(fields: [buyerId], references: [id])
+
+  @@map("bids")
+}
