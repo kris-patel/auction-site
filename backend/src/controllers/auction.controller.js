@@ -11,7 +11,7 @@ export const getActiveAuctions = async (req, res) => {
       },
       include: {
         seller: {
-          select: {
+          select: { 
             id: true,
             username: true
           }
@@ -100,7 +100,7 @@ export const createAuction = async (req, res) => {
     const endDate = new Date(endsAt);
     if (endDate <= new Date()) {
       return res.status(400).json({ 
-        error: 'End date must be in the future' 
+        error: 'End date must be in the future'
       });
     }
 
@@ -139,6 +139,8 @@ export const createAuction = async (req, res) => {
 export const getMyAuctions = async (req, res) => {
   try {
     const sellerId = req.user.id;
+    // console.log(req.user.id)
+    // const sellerId = 'cmgopazxu0001li69tb9sp53a';
 
     const auctions = await prisma.auctionItem.findMany({
       where: { sellerId },
@@ -164,6 +166,8 @@ export const getMyAuctions = async (req, res) => {
         createdAt: 'desc'
       }
     });
+
+    console.log(auctions)
 
     res.json({ auctions });
   } catch (error) {
