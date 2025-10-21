@@ -238,7 +238,7 @@ const BuyerDashboard = () => {
                 variant="outline"
                 className="w-full"
               >
-                <Gavel className="w-4 h-4 mr-2" />
+                {/* <Gavel className="w-4 h-4 mr-2" /> */}
                 Place Bid
               </Button>
             </Card>
