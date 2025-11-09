@@ -527,7 +527,7 @@ const LandingPage = ({ onNavigate }) => {
             </p>
             <Button
               onClick={() => onNavigate('register')}
-              className="px-10 py-4 text-lg bg-white text-blue-500 hover:bg-gray-100 shadow-xl"
+              className="px-10 py-4 text-lg bg-white text-blue-500 hover:bg-gray-10`0 shadow-xl"
             >
               Create Free Account Now
             </Button>
