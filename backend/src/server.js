@@ -86,6 +86,7 @@ import auctionRoutes from './routes/auction.routes.js';
 import bidRoutes from './routes/bid.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import repRoutes from './routes/rep.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -141,6 +142,7 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/bids', bidRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rep', repRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res) => {
