@@ -363,10 +363,39 @@ const api = {
   login: (email, password) => axiosInstance.post('/auth/login', { email, password }),
 
   // Auctions
-  getAuctions: () => axiosInstance.get('/auctions/active').then(res => res.data.auctions),
+  // getAuctions: () => axiosInstance.get('/auctions/active').then(res => res.data.auctions),
   getAuctionDetail: (auctionId) => axiosInstance.get(`/auctions/${auctionId}`).then(res => res.data.auction),
-  getMyAuctions: () => axiosInstance.get('/auctions/seller/mine').then(res => res.data.auctions),
+  // getMyAuctions: () => axiosInstance.get('/auctions/seller/mine').then(res => res.data.auctions),
   createAuction: (data) => axiosInstance.post('/auctions', data).then(res => res.data),
+
+  getAuctionsByStatus : async (status) => {
+  const response = await axiosInstance.get(`/auctions/by-status?status=${status}`);
+  return response.data.auctions;
+},
+
+// Get seller's auctions with status filter
+  getMyAuctionsByStatus: async (status) => {
+  const response = await axiosInstance.get(`/auctions/seller/mine?status=${status}`);
+  return response.data.auctions;
+},
+
+// Update existing getMyAuctions to support filtering
+getMyAuctions : async (status = null) => {
+  const url = status 
+    ? `/auctions/seller/mine?status=${status}`
+    : '/auctions/seller/mine';
+  const response = await axiosInstance.get(url);
+  return response.data.auctions;
+},
+
+// Update existing getAuctions to support filtering
+getAuctions : async (status = 'active') => {
+  const url = status === 'active' 
+    ? '/auctions/active'
+    : `/auctions/by-status?status=${status}`;
+  const response = await axiosInstance.get(url);
+  return response.data.auctions;
+},
 
   // Bids
   placeBid: (auctionId, amount) => axiosInstance.post(`/bids/${auctionId}`, { bidAmount: amount }),

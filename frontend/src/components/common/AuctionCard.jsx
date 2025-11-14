@@ -688,8 +688,12 @@ const AuctionCard = ({
               className="flex-1"
               disabled={auction.status !== 'active'}
             >
-              <Gavel className="w-4 h-4 mr-2" />
-              Place Bid
+              <div className='flex justify-center'>
+                {/* <Gavel className="w-4 h-4 mr-2" /> */}
+                <div>
+                  Place bid
+                </div>
+              </div>
             </Button>
           )}
 
