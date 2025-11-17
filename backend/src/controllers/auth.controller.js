@@ -244,6 +244,8 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+
+    console.log(req.body);
     const { email, password } = req.body;
 
     // Validate input
@@ -271,6 +273,7 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
 
     // Generate token
     const token = generateToken({ 
