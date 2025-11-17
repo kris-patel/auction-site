@@ -212,24 +212,31 @@ const app = express();
 //   credentials: true,
 // }));
 
-// Example robust CORS setup
-import cors from 'cors';
+// const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000';
+// const allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
 
-const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000';
-const allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  credentials: false  
+}));
 
-// dynamic origin check
-const corsOptions = {
-  origin: function(origin, callback) {
-    // allow requests with no origin (mobile apps, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type','Authorization','Accept','Origin','X-Requested-With']
-};
+// preflight
+app.options("*", cors());
+
+// // dynamic origin check
+// const corsOptions = {
+//   origin: function(origin, callback) {
+//     // allow requests with no origin (mobile apps, Postman)
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.includes(origin)) return callback(null, true);
+//     callback(new Error('Not allowed by CORS'));
+//   },
+//   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+//   credentials: true,
+//   allowedHeaders: ['Content-Type','Authorization','Accept','Origin','X-Requested-With']
+// };
 
 
 
@@ -237,8 +244,8 @@ const corsOptions = {
 // app.use(express.json());
 // app.use(express.urlencoded({ extended: true }));
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // explicitly handle preflight
+// app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions)); // explicitly handle preflight
 // app.options('*', cors());
 
 // Request logging
