@@ -3,7 +3,7 @@ name: Build and deploy frontend to GitHub Pages
 on:
   push:
     branches:
-      - main   # change if your default branch is different
+      - main 
 
 jobs:
   build-and-deploy:
@@ -11,24 +11,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false    
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install & build
+      - name: Install dependencies & build
         working-directory: ./frontend
         run: |
           npm ci
           npm run build
-          # ensure SPA client-side routing works on GitHub Pages
           cp -f dist/index.html dist/404.html
+
+      - name: Configure git for deploy
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
