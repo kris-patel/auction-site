@@ -737,8 +737,11 @@ const AuctionCard = ({
               variant="danger"
               className="flex-1"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <div className='flex justify-center'>
+
+              <Trash2 className="w-4 h-4 mr-2 my-1" />
               Delete
+              </div>
             </Button>
           )}
         </div>

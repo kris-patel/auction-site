@@ -566,13 +566,66 @@ export const getUserDetails = async (req, res) => {
 };
 
 // New function to approve/reject pending auctions
+// export const approveAuction = async (req, res) => {
+//   try {
+//     const { auctionId } = req.params;
+//     const { approved } = req.body; // true to approve, false to reject
+
+//     const auction = await prisma.auctionItem.findUnique({
+//       where: { id: auctionId }
+//     });
+
+//     if (!auction) {
+//       return res.status(404).json({ error: 'Auction not found' });
+//     }
+
+//     if (auction.status !== 'pending') {
+//       return res.status(400).json({ 
+//         error: 'Only pending auctions can be approved or rejected' 
+//       });
+//     }
+
+//     if (approved) {
+//       // Approve and activate
+//       const updatedAuction = await prisma.auctionItem.update({
+//         where: { id: auctionId },
+//         data: { status: 'active' }
+//       });
+
+//       res.json({
+//         message: 'Auction approved and activated',
+//         auction: updatedAuction
+//       });
+//     } else {
+//       // Reject and delete
+//       await prisma.auctionItem.delete({
+//         where: { id: auctionId }
+//       });
+
+//       res.json({ message: 'Auction rejected and deleted' });
+//     }
+//   } catch (error) {
+//     console.error('Approve auction error:', error);
+//     res.status(500).json({ error: 'Failed to process auction approval' });
+//   }
+// };
+
 export const approveAuction = async (req, res) => {
   try {
     const { auctionId } = req.params;
     const { approved } = req.body; // true to approve, false to reject
 
     const auction = await prisma.auctionItem.findUnique({
-      where: { id: auctionId }
+      where: { id: auctionId },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
+      }
     });
 
     if (!auction) {
@@ -589,7 +642,11 @@ export const approveAuction = async (req, res) => {
       // Approve and activate
       const updatedAuction = await prisma.auctionItem.update({
         where: { id: auctionId },
-        data: { status: 'active' }
+        data: { status: 'active' },
+        include: {
+          seller: true,
+          images: true
+        }
       });
 
       res.json({
@@ -597,15 +654,66 @@ export const approveAuction = async (req, res) => {
         auction: updatedAuction
       });
     } else {
-      // Reject and delete
+      // Reject and delete (or you could add a 'rejected' status instead)
       await prisma.auctionItem.delete({
         where: { id: auctionId }
       });
 
-      res.json({ message: 'Auction rejected and deleted' });
+      res.json({ 
+        message: 'Auction rejected and removed',
+        auctionId 
+      });
     }
   } catch (error) {
     console.error('Approve auction error:', error);
     res.status(500).json({ error: 'Failed to process auction approval' });
+  }
+};
+
+// NEW: Update auction status (for reps to change active → closed, etc.)
+export const updateAuctionStatus = async (req, res) => {
+  try {
+    const { auctionId } = req.params;
+    const { status } = req.body; // 'active', 'closed', 'pending'
+
+    if (!['active', 'closed', 'pending'].includes(status)) {
+      return res.status(400).json({ 
+        error: 'Invalid status. Must be: active, closed, or pending' 
+      });
+    }
+
+    const auction = await prisma.auctionItem.findUnique({
+      where: { id: auctionId }
+    });
+
+    if (!auction) {
+      return res.status(404).json({ error: 'Auction not found' });
+    }
+
+    const updatedAuction = await prisma.auctionItem.update({
+      where: { id: auctionId },
+      data: { status },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        },
+        images: true,
+        _count: {
+          select: { bids: true }
+        }
+      }
+    });
+
+    res.json({
+      message: `Auction status updated to ${status}`,
+      auction: updatedAuction
+    });
+  } catch (error) {
+    console.error('Update auction status error:', error);
+    res.status(500).json({ error: 'Failed to update auction status' });
   }
 };

@@ -440,7 +440,21 @@ getAuctions : async (status = 'active') => {
     axiosInstance.delete(`/upload/auction/${imageId}`).then(res => res.data),
 
   setPrimaryImage: (imageId) => 
-    axiosInstance.patch(`/upload/auction/${imageId}/primary`).then(res => res.data)
+    axiosInstance.patch(`/upload/auction/${imageId}/primary`).then(res => res.data),
+
+  updateAuction: (auctionId, data) => 
+    axiosInstance.put(`/auctions/${auctionId}`, data).then(res => res.data),
+
+  // NEW: Rep approval endpoints
+  approveAuction: (auctionId, approved) => 
+    axiosInstance.post(`/rep/auction/${auctionId}/approve`, { approved }).then(res => res.data),
+
+  updateAuctionStatus: (auctionId, status) => 
+    axiosInstance.patch(`/rep/auction/${auctionId}/status`, { status }).then(res => res.data),
+
+
+
+
 };
 
 export default api;
