@@ -193,30 +193,53 @@ dotenv.config();
 const app = express();
 
 // CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000', // your frontend in dev
-  process.env.CORS_ORIGIN
-];
+// const allowedOrigins = [
+//   'http://localhost:3000', // your frontend in dev
+//   process.env.CORS_ORIGIN
+// ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (like Postman)
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // allow requests with no origin (like Postman)
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+//       return callback(new Error(msg), false);
+//     }
+//     return callback(null, true);
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   credentials: true,
+// }));
+
+// Example robust CORS setup
+import cors from 'cors';
+
+const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
+
+// dynamic origin check
+const corsOptions = {
+  origin: function(origin, callback) {
+    // allow requests with no origin (mobile apps, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true,
-}));
+  allowedHeaders: ['Content-Type','Authorization','Accept','Origin','X-Requested-With']
+};
+
+
 
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
 
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // explicitly handle preflight
+// app.options('*', cors());
 
 // Request logging
 app.use((req, res, next) => {
