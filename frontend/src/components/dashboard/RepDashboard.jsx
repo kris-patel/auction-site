@@ -889,7 +889,7 @@ const RepDashboard = () => {
       all: auctions.length,
       pending: auctions.filter(a => a.computedStatus === 'pending').length,
       active: auctions.filter(a => a.computedStatus === 'active').length,
-      completed: auctions.filter(a => a.computedStatus === 'completed' || a.computedStatus === 'closed').length
+      closed: auctions.filter(a => a.computedStatus === 'closed' || a.computedStatus === 'closed').length
     };
   };
 
@@ -1042,15 +1042,15 @@ const RepDashboard = () => {
               Active ({statusCounts.active})
             </button>
             <button
-              onClick={() => setStatusFilter('completed')}
+              onClick={() => setStatusFilter('closed')}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
-                statusFilter === 'completed'
+                statusFilter === 'closed'
                   ? 'border-gray-500 text-gray-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               <XCircle className="w-4 h-4" />
-              Completed ({statusCounts.completed})
+              Completed ({statusCounts.closed})
             </button>
           </div>
         </div>

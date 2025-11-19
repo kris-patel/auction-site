@@ -452,8 +452,25 @@ getAuctions : async (status = 'active') => {
   updateAuctionStatus: (auctionId, status) => 
     axiosInstance.patch(`/rep/auction/${auctionId}/status`, { status }).then(res => res.data),
 
+  updateProfileImage: (imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    return axiosInstance.put('/auth/profile/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data);
+  },
 
+  updateUsername: (username) => {
+    return axiosInstance.put('/auth/profile/username', { username })
+      .then(res => res.data);
+  },
 
+  updatePassword: (currentPassword, newPassword) => {
+    return axiosInstance.put('/auth/profile/password', {
+      currentPassword,
+      newPassword
+    }).then(res => res.data);
+  },
 
 };
 
