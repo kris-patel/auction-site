@@ -2667,15 +2667,19 @@ const SellerDashboard = () => {
             variant={view === 'list' ? 'primary' : 'outline'}
             onClick={() => setView('list')}
           >
-            <List className="w-4 h-4 mr-2" />
-            My Auctions
+            <div className='flex'>
+              <List className="w-4 h-4 mr-2 my-1" />
+              My Auctions
+            </div>
           </Button>
           <Button
             variant={view === 'create' ? 'primary' : 'outline'}
             onClick={() => setView('create')}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create
+            <div className='flex'>
+              <Plus className="w-4 h-4 mr-2 my-1" />
+              Create
+            </div>
           </Button>
         </div>
       </div>

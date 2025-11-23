@@ -172,7 +172,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
 
           <Input
             label="End Date"
-            type="date"
+            type="datetime-local"
             value={formData.endsAt}
             onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
             min={new Date().toISOString().split('T')[0]}
