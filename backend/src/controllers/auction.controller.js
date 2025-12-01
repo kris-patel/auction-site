@@ -431,10 +431,50 @@ export const updateAuction = async (req, res) => {
   }
 };
 
+// export const deleteAuction = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const sellerId = req.user.id;
+
+//     const auction = await prisma.auctionItem.findUnique({
+//       where: { id },
+//       include: {
+//         bids: true
+//       }
+//     });
+
+//     if (!auction) {
+//       return res.status(404).json({ error: 'Auction not found' });
+//     }
+
+//     if (auction.sellerId !== sellerId) {
+//       return res.status(403).json({ 
+//         error: 'You can only delete your own auctions' 
+//       });
+//     }
+
+//     if (auction.bids.length > 0) {
+//       return res.status(400).json({ 
+//         error: 'Cannot delete auction with existing bids' 
+//       });
+//     }
+
+//     await prisma.auctionItem.delete({
+//       where: { id }
+//     });
+
+//     res.json({ message: 'Auction deleted successfully' });
+//   } catch (error) {
+//     console.error('Delete auction error:', error);
+//     res.status(500).json({ error: 'Failed to delete auction' });
+//   }
+// };
+
 export const deleteAuction = async (req, res) => {
   try {
     const { id } = req.params;
-    const sellerId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     const auction = await prisma.auctionItem.findUnique({
       where: { id },
@@ -447,7 +487,8 @@ export const deleteAuction = async (req, res) => {
       return res.status(404).json({ error: 'Auction not found' });
     }
 
-    if (auction.sellerId !== sellerId) {
+    // Sellers can only delete their own auctions, reps/admins can delete any
+    if (userRole === 'seller' && auction.sellerId !== userId) {
       return res.status(403).json({ 
         error: 'You can only delete your own auctions' 
       });
@@ -469,8 +510,6 @@ export const deleteAuction = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete auction' });
   }
 };
-
-
 
 export const approveAuction = async (req, res) => {
   try {
