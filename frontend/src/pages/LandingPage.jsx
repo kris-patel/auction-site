@@ -845,9 +845,13 @@ const LandingPage = () => {
               Join our community today and discover why thousands choose our platform for their auction needs.
             </p>
             <Link to="/register">
-              <Button className="px-10 py-4 text-lg bg-white text-black hover:bg-gray-900 hover:text-white shadow-xl">
+              <Button className="px-10 py-4 text-lg text-white bg-gray-900 hover:bg-gray-500 ">
                 Create Free Account Now
               </Button>
+
+              {/* hover:bg-gray-900 hover:text-white shadow-xl */}
+              
+
             </Link>
             <p className="text-blue-100 mt-4">Get started in less than 2 minutes</p>
           </div>

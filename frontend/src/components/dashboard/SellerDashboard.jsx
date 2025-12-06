@@ -304,14 +304,29 @@ const SellerDashboard = () => {
               ]}
             />
             
-            <Input
-              label="Starting Price"
-              type="number"
-              step="0.01"
-              value={formData.startingPrice}
-              onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
-              required
-            />
+            <div className='text-sm text-gray-700 -mb-2 font-medium'>
+              Starting Price
+              <div className='flex my-2'>
+                <div className='mr-3 my-2'>
+                  $
+                </div>
+                <div className='flex-grow'>
+                <Input
+                // label="Starting Price"
+                type="number"
+                step="0.01"
+                value={formData.startingPrice}
+                onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
+                required
+                />
+                </div>
+              </div>
+
+            </div>
+            
+            
+
+            
             
             <Input
               label="End Date"
