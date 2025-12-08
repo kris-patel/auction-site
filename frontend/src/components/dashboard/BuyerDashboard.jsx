@@ -1096,7 +1096,7 @@ const BuyerDashboard = () => {
                         >
                           View Details
                         </Button>
-                        {bid.auction.status === 'active' && (bid.auction.currentPrice.toFixed(2) < bid.bidAmount.toFixed(2))  && new Date() < new Date(bid.auction.endsAt) && (
+                        {bid.auction.status === 'active' && (bid.auction.currentPrice.toFixed(2) > bid.bidAmount.toFixed(2))  && new Date() < new Date(bid.auction.endsAt) && (
                           <Button
                             size="sm"
                             onClick={() => handlePlaceBidClick(bid.auction)}
