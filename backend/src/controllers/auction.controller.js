@@ -629,10 +629,106 @@ export const createAuction = async (req, res) => {
 };
 
 // In updateAuction function - REPLACE the endsAt handling section:
+// export const updateAuction = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, description, category, endsAt } = req.body;
+//     const userId = req.user.id;
+//     const userRole = req.user.role;
+
+//     const auction = await prisma.auctionItem.findUnique({
+//       where: { id },
+//       include: {
+//         bids: true
+//       }
+//     });
+
+//     if (!auction) {
+//       return res.status(404).json({ error: 'Auction not found' });
+//     }
+
+//     if (userRole === 'seller' && auction.sellerId !== userId) {
+//       return res.status(403).json({ 
+//         error: 'You can only update your own auctions' 
+//       });
+//     }
+
+//     if (auction.bids.length > 0) {
+//       return res.status(400).json({ 
+//         error: 'Cannot edit auction with existing bids' 
+//       });
+//     }
+
+//     if (auction.status !== 'pending') {
+//       return res.status(400).json({ 
+//         error: 'Only pending auctions can be edited' 
+//       });
+//     }
+
+//     const updateData = {};
+//     if (title) updateData.title = title;
+//     if (description) updateData.description = description;
+//     if (category !== undefined) updateData.category = category;
+    
+//     // ✅ FIXED: Proper date validation
+//     if (endsAt) {
+//       const endDate = new Date(endsAt);
+//       const now = new Date();
+      
+//       // Add 5 second buffer to account for network latency
+//       const nowWithBuffer = new Date(now.getTime() - 5000);
+      
+//       if (endDate <= nowWithBuffer) {
+//         return res.status(400).json({ 
+//           error: 'End date must be in the future',
+//           debug: {
+//             received: endsAt,
+//             parsed: endDate.toISOString(),
+//             current: now.toISOString()
+//           }
+//         });
+//       }
+//       updateData.endsAt = endDate;
+//     }
+
+//     const updatedAuction = await prisma.auctionItem.update({
+//       where: { id },
+//       data: updateData,
+//       include: {
+//         seller: {
+//           select: {
+//             id: true,
+//             username: true,
+//             email: true
+//           }
+//         },
+//         images: {
+//           orderBy: {
+//             displayOrder: 'asc'
+//           }
+//         },
+//         _count: {
+//           select: {
+//             bids: true
+//           }
+//         }
+//       }
+//     });
+
+//     res.json({
+//       message: 'Auction updated successfully',
+//       auction: updatedAuction
+//     });
+//   } catch (error) {
+//     console.error('Update auction error:', error);
+//     res.status(500).json({ error: 'Failed to update auction' });
+//   }
+// };
+
 export const updateAuction = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, endsAt } = req.body;
+    const { title, description, category, startingPrice, endsAt } = req.body; // ✅ ADD startingPrice here
     const userId = req.user.id;
     const userRole = req.user.role;
 
@@ -670,12 +766,25 @@ export const updateAuction = async (req, res) => {
     if (description) updateData.description = description;
     if (category !== undefined) updateData.category = category;
     
-    // ✅ FIXED: Proper date validation
+    // ✅ ADD THIS: Handle startingPrice update
+    if (startingPrice !== undefined) {
+      const price = parseFloat(startingPrice);
+      if (isNaN(price) || price <= 0) {
+        return res.status(400).json({ 
+          error: 'Starting price must be a positive number' 
+        });
+      }
+      updateData.startingPrice = price;
+      // Also update currentPrice if no bids exist
+      if (auction.bids.length === 0) {
+        updateData.currentPrice = price;
+      }
+    }
+    
     if (endsAt) {
       const endDate = new Date(endsAt);
       const now = new Date();
       
-      // Add 5 second buffer to account for network latency
       const nowWithBuffer = new Date(now.getTime() - 5000);
       
       if (endDate <= nowWithBuffer) {
