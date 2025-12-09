@@ -252,6 +252,9 @@ export const createAuction = async (req, res) => {
 
     const endDate = new Date(endsAt);
     if (endDate <= new Date()) {
+      console.log(new Date())
+      console.log(endDate)
+      console.log(endDate <= new Date())
       return res.status(400).json({ 
         error: 'End date must be in the future'
       });
@@ -388,6 +391,9 @@ export const updateAuction = async (req, res) => {
     if (category !== undefined) updateData.category = category;
     if (endsAt) {
       const endDate = new Date(endsAt);
+      console.log(new Date())
+      console.log(endDate)
+      console.log(endDate <= new Date())
       if (endDate <= new Date()) {
         return res.status(400).json({ 
           error: 'End date must be in the future'
