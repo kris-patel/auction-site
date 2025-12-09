@@ -238,62 +238,62 @@ export const getMyAuctions = async (req, res) => {
   }
 };
 
-export const createAuction = async (req, res) => {
-  try {
-    console.log('Create auction request received');
-    const { title, description, category, startingPrice, endsAt } = req.body;
-    const sellerId = req.user.id;
+// export const createAuction = async (req, res) => {
+//   try {
+//     console.log('Create auction request received');
+//     const { title, description, category, startingPrice, endsAt } = req.body;
+//     const sellerId = req.user.id;
 
-    if (!title || !description || !startingPrice || !endsAt) {
-      return res.status(400).json({ 
-        error: 'Title, description, starting price, and end date are required' 
-      });
-    }
+//     if (!title || !description || !startingPrice || !endsAt) {
+//       return res.status(400).json({ 
+//         error: 'Title, description, starting price, and end date are required' 
+//       });
+//     }
 
-    const endDate = new Date(endsAt);
-    if (endDate <= new Date()) {
-      console.log(new Date())
-      console.log(endDate)
-      console.log(endDate <= new Date())
-      return res.status(400).json({ 
-        error: 'End date must be in the future'
-      });
-    }
+//     const endDate = new Date(endsAt);
+//     if (endDate <= new Date()) {
+//       console.log(new Date())
+//       console.log(endDate)
+//       console.log(endDate <= new Date())
+//       return res.status(400).json({ 
+//         error: 'End date must be in the future'
+//       });
+//     }
 
-    const auction = await prisma.auctionItem.create({
-      data: {
-        title,
-        description,
-        category: category || null,
-        startingPrice: parseFloat(startingPrice),
-        currentPrice: parseFloat(startingPrice),
-        endsAt: endDate,
-        sellerId,
-        status: 'pending'
-      },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            username: true,
-            email: true
-          }
-        }
-      }
-    });
+//     const auction = await prisma.auctionItem.create({
+//       data: {
+//         title,
+//         description,
+//         category: category || null,
+//         startingPrice: parseFloat(startingPrice),
+//         currentPrice: parseFloat(startingPrice),
+//         endsAt: endDate,
+//         sellerId,
+//         status: 'pending'
+//       },
+//       include: {
+//         seller: {
+//           select: {
+//             id: true,
+//             username: true,
+//             email: true
+//           }
+//         }
+//       }
+//     });
 
-    res.status(201).json({
-      message: 'Auction created successfully and pending approval',
-      auction
-    });
-  } catch (error) {
-    console.error('Create auction error:', error);
-    res.status(500).json({ 
-      error: 'Failed to create auction',
-      details: error.message 
-    });
-  }
-};
+//     res.status(201).json({
+//       message: 'Auction created successfully and pending approval',
+//       auction
+//     });
+//   } catch (error) {
+//     console.error('Create auction error:', error);
+//     res.status(500).json({ 
+//       error: 'Failed to create auction',
+//       details: error.message 
+//     });
+//   }
+// };
 
 // export const updateAuction = async (req, res) => {
 //   try {
@@ -344,98 +344,98 @@ export const createAuction = async (req, res) => {
 //   }
 // };
 
-export const updateAuction = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, description, category, endsAt } = req.body;
-    const userId = req.user.id;
-    const userRole = req.user.role;
+// export const updateAuction = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, description, category, endsAt } = req.body;
+//     const userId = req.user.id;
+//     const userRole = req.user.role;
 
-    // Fetch auction with bids count
-    const auction = await prisma.auctionItem.findUnique({
-      where: { id },
-      include: {
-        bids: true
-      }
-    });
+//     // Fetch auction with bids count
+//     const auction = await prisma.auctionItem.findUnique({
+//       where: { id },
+//       include: {
+//         bids: true
+//       }
+//     });
 
-    if (!auction) {
-      return res.status(404).json({ error: 'Auction not found' });
-    }
+//     if (!auction) {
+//       return res.status(404).json({ error: 'Auction not found' });
+//     }
 
-    // Authorization check: Sellers can only edit their own auctions, reps can edit any
-    if (userRole === 'seller' && auction.sellerId !== userId) {
-      return res.status(403).json({ 
-        error: 'You can only update your own auctions' 
-      });
-    }
+//     // Authorization check: Sellers can only edit their own auctions, reps can edit any
+//     if (userRole === 'seller' && auction.sellerId !== userId) {
+//       return res.status(403).json({ 
+//         error: 'You can only update your own auctions' 
+//       });
+//     }
 
-    // Prevent editing if auction has bids (business rule)
-    if (auction.bids.length > 0) {
-      return res.status(400).json({ 
-        error: 'Cannot edit auction with existing bids' 
-      });
-    }
+//     // Prevent editing if auction has bids (business rule)
+//     if (auction.bids.length > 0) {
+//       return res.status(400).json({ 
+//         error: 'Cannot edit auction with existing bids' 
+//       });
+//     }
 
-    // Only allow editing pending auctions
-    if (auction.status !== 'pending') {
-      return res.status(400).json({ 
-        error: 'Only pending auctions can be edited' 
-      });
-    }
+//     // Only allow editing pending auctions
+//     if (auction.status !== 'pending') {
+//       return res.status(400).json({ 
+//         error: 'Only pending auctions can be edited' 
+//       });
+//     }
 
-    // Build update data object
-    const updateData = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (category !== undefined) updateData.category = category;
-    if (endsAt) {
-      const endDate = new Date(endsAt);
-      console.log(new Date())
-      console.log(endDate)
-      console.log(endDate <= new Date())
-      if (endDate <= new Date()) {
-        return res.status(400).json({ 
-          error: 'End date must be in the future'
-        });
-      }
-      updateData.endsAt = endDate;
-    }
+//     // Build update data object
+//     const updateData = {};
+//     if (title) updateData.title = title;
+//     if (description) updateData.description = description;
+//     if (category !== undefined) updateData.category = category;
+//     if (endsAt) {
+//       const endDate = new Date(endsAt);
+//       console.log(new Date())
+//       console.log(endDate)
+//       console.log(endDate <= new Date())
+//       if (endDate <= new Date()) {
+//         return res.status(400).json({ 
+//           error: 'End date must be in the future'
+//         });
+//       }
+//       updateData.endsAt = endDate;
+//     }
 
-    // Update auction
-    const updatedAuction = await prisma.auctionItem.update({
-      where: { id },
-      data: updateData,
-      include: {
-        seller: {
-          select: {
-            id: true,
-            username: true,
-            email: true
-          }
-        },
-        images: {
-          orderBy: {
-            displayOrder: 'asc'
-          }
-        },
-        _count: {
-          select: {
-            bids: true
-          }
-        }
-      }
-    });
+//     // Update auction
+//     const updatedAuction = await prisma.auctionItem.update({
+//       where: { id },
+//       data: updateData,
+//       include: {
+//         seller: {
+//           select: {
+//             id: true,
+//             username: true,
+//             email: true
+//           }
+//         },
+//         images: {
+//           orderBy: {
+//             displayOrder: 'asc'
+//           }
+//         },
+//         _count: {
+//           select: {
+//             bids: true
+//           }
+//         }
+//       }
+//     });
 
-    res.json({
-      message: 'Auction updated successfully',
-      auction: updatedAuction
-    });
-  } catch (error) {
-    console.error('Update auction error:', error);
-    res.status(500).json({ error: 'Failed to update auction' });
-  }
-};
+//     res.json({
+//       message: 'Auction updated successfully',
+//       auction: updatedAuction
+//     });
+//   } catch (error) {
+//     console.error('Update auction error:', error);
+//     res.status(500).json({ error: 'Failed to update auction' });
+//   }
+// };
 
 // export const deleteAuction = async (req, res) => {
 //   try {
@@ -556,5 +556,171 @@ export const approveAuction = async (req, res) => {
   } catch (error) {
     console.error('Approve auction error:', error);
     res.status(500).json({ error: 'Failed to approve auction' });
+  }
+};
+
+// CHANGES NEEDED TO auction.controller.js
+
+// In createAuction function - REPLACE the date validation section:
+export const createAuction = async (req, res) => {
+  try {
+    console.log('Create auction request received');
+    const { title, description, category, startingPrice, endsAt } = req.body;
+    const sellerId = req.user.id;
+
+    if (!title || !description || !startingPrice || !endsAt) {
+      return res.status(400).json({ 
+        error: 'Title, description, starting price, and end date are required' 
+      });
+    }
+
+    // ✅ FIXED: Parse the ISO date string properly
+    const endDate = new Date(endsAt);
+    const now = new Date();
+    
+    // Add 5 second buffer to account for network latency
+    const nowWithBuffer = new Date(now.getTime() - 5000);
+    
+    if (endDate <= nowWithBuffer) {
+      return res.status(400).json({ 
+        error: 'End date must be in the future',
+        debug: {
+          received: endsAt,
+          parsed: endDate.toISOString(),
+          current: now.toISOString(),
+          comparison: endDate <= now
+        }
+      });
+    }
+
+    const auction = await prisma.auctionItem.create({
+      data: {
+        title,
+        description,
+        category: category || null,
+        startingPrice: parseFloat(startingPrice),
+        currentPrice: parseFloat(startingPrice),
+        endsAt: endDate,
+        sellerId,
+        status: 'pending'
+      },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Auction created successfully and pending approval',
+      auction
+    });
+  } catch (error) {
+    console.error('Create auction error:', error);
+    res.status(500).json({ 
+      error: 'Failed to create auction',
+      details: error.message 
+    });
+  }
+};
+
+// In updateAuction function - REPLACE the endsAt handling section:
+export const updateAuction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, category, endsAt } = req.body;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const auction = await prisma.auctionItem.findUnique({
+      where: { id },
+      include: {
+        bids: true
+      }
+    });
+
+    if (!auction) {
+      return res.status(404).json({ error: 'Auction not found' });
+    }
+
+    if (userRole === 'seller' && auction.sellerId !== userId) {
+      return res.status(403).json({ 
+        error: 'You can only update your own auctions' 
+      });
+    }
+
+    if (auction.bids.length > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot edit auction with existing bids' 
+      });
+    }
+
+    if (auction.status !== 'pending') {
+      return res.status(400).json({ 
+        error: 'Only pending auctions can be edited' 
+      });
+    }
+
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    
+    // ✅ FIXED: Proper date validation
+    if (endsAt) {
+      const endDate = new Date(endsAt);
+      const now = new Date();
+      
+      // Add 5 second buffer to account for network latency
+      const nowWithBuffer = new Date(now.getTime() - 5000);
+      
+      if (endDate <= nowWithBuffer) {
+        return res.status(400).json({ 
+          error: 'End date must be in the future',
+          debug: {
+            received: endsAt,
+            parsed: endDate.toISOString(),
+            current: now.toISOString()
+          }
+        });
+      }
+      updateData.endsAt = endDate;
+    }
+
+    const updatedAuction = await prisma.auctionItem.update({
+      where: { id },
+      data: updateData,
+      include: {
+        seller: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        },
+        images: {
+          orderBy: {
+            displayOrder: 'asc'
+          }
+        },
+        _count: {
+          select: {
+            bids: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Auction updated successfully',
+      auction: updatedAuction
+    });
+  } catch (error) {
+    console.error('Update auction error:', error);
+    res.status(500).json({ error: 'Failed to update auction' });
   }
 };

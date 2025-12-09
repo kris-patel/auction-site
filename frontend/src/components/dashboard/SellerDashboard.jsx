@@ -45,6 +45,22 @@ const SellerDashboard = () => {
     filterAuctions();
   }, [auctions, statusFilter, searchQuery]);
 
+  const formatDateTimeLocal = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    return formatDateTimeLocal(now.toISOString());
+  };
+
   const loadAuctions = async () => {
     try {
       const data = await api.getMyAuctions();
@@ -138,53 +154,105 @@ const SellerDashboard = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setMessage(null);
 
-    try {
-      const response = await api.createAuction({
-        ...formData,
-        startingPrice: parseFloat(formData.startingPrice)
-      });
+  //   try {
+  //     const response = await api.createAuction({
+  //       ...formData,
+  //       startingPrice: parseFloat(formData.startingPrice)
+  //     });
       
-      const newAuction = response.auction;
+  //     const newAuction = response.auction;
       
-      if (!newAuction || !newAuction.id) {
-        throw new Error('Failed to get auction ID from response');
-      }
+  //     if (!newAuction || !newAuction.id) {
+  //       throw new Error('Failed to get auction ID from response');
+  //     }
       
-      if (auctionImages.length > 0) {
-        await api.uploadAuctionImages(newAuction.id, auctionImages);
-      }
+  //     if (auctionImages.length > 0) {
+  //       await api.uploadAuctionImages(newAuction.id, auctionImages);
+  //     }
       
-      setMessage({ type: 'success', text: 'Auction created successfully and pending approval!' });
-      setFormData({
-        title: '',
-        description: '',
-        category: 'Electronics',
-        startingPrice: '',
-        endsAt: ''
-      });
-      setAuctionImages([]);
-      imagePreviews.forEach(url => URL.revokeObjectURL(url));
-      setImagePreviews([]);
+  //     setMessage({ type: 'success', text: 'Auction created successfully and pending approval!' });
+  //     setFormData({
+  //       title: '',
+  //       description: '',
+  //       category: 'Electronics',
+  //       startingPrice: '',
+  //       endsAt: ''
+  //     });
+  //     setAuctionImages([]);
+  //     imagePreviews.forEach(url => URL.revokeObjectURL(url));
+  //     setImagePreviews([]);
       
-      setTimeout(() => {
-        setView('list');
-        loadAuctions();
-      }, 1500);
-    } catch (err) {
-      console.error('Error creating auction:', err);
-      setMessage({ 
-        type: 'error', 
-        text: err.response?.data?.error || err.message || 'Failed to create auction' 
-      });
-    } finally {
-      setLoading(false);
+  //     setTimeout(() => {
+  //       setView('list');
+  //       loadAuctions();
+  //     }, 1500);
+  //   } catch (err) {
+  //     console.error('Error creating auction:', err);
+  //     setMessage({ 
+  //       type: 'error', 
+  //       text: err.response?.data?.error || err.message || 'Failed to create auction' 
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setMessage(null);
+
+  try {
+    // Convert datetime-local value to ISO string for backend
+    const submitData = {
+      ...formData,
+      startingPrice: parseFloat(formData.startingPrice),
+      endsAt: formData.endsAt ? new Date(formData.endsAt).toISOString() : formData.endsAt
+    };
+
+    const response = await api.createAuction(submitData);
+    
+    const newAuction = response.auction;
+    
+    if (!newAuction || !newAuction.id) {
+      throw new Error('Failed to get auction ID from response');
     }
-  };
+    
+    if (auctionImages.length > 0) {
+      await api.uploadAuctionImages(newAuction.id, auctionImages);
+    }
+    
+    setMessage({ type: 'success', text: 'Auction created successfully and pending approval!' });
+    setFormData({
+      title: '',
+      description: '',
+      category: 'Electronics',
+      startingPrice: '',
+      endsAt: ''
+    });
+    setAuctionImages([]);
+    imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    setImagePreviews([]);
+    
+    setTimeout(() => {
+      setView('list');
+      loadAuctions();
+    }, 1500);
+  } catch (err) {
+    console.error('Error creating auction:', err);
+    setMessage({ 
+      type: 'error', 
+      text: err.response?.data?.error || err.message || 'Failed to create auction' 
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleViewDetails = async (auction) => {
     setLoadingDetails(true);
@@ -328,14 +396,23 @@ const SellerDashboard = () => {
 
             
             
-            <Input
+            {/* <Input
               label="End Date"
               type="datetime-local"
               value={formData.endsAt}
               onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
               min={new Date().toISOString().split('T')[0]}
               required
-            />
+            /> */}
+
+            <Input
+            label="End Date & Time"
+            type="datetime-local"
+            value={formData.endsAt}
+            onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
+            min={getMinDateTime()}
+            required
+          />
             
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -539,3 +616,15 @@ const SellerDashboard = () => {
 };
 
 export default SellerDashboard;
+
+
+// ------------------------------------------------------------------
+
+// This is a PARTIAL fix showing only the changes needed in the create auction form section
+
+// Add this helper function at the top of the SellerDashboard component:
+
+// REPLACE the handleSubmit function with this fixed version:
+
+
+// REPLACE the End Date Input field with this fixed version (around line 213):
