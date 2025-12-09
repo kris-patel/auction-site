@@ -151,6 +151,7 @@ import {
   getAllAuctions,
   resetPassword,
   getUserDetails,
+  deleteAuction, 
   approveAuction,
   updateAuctionStatus
 } from '../controllers/rep.controller.js';
@@ -169,6 +170,7 @@ router.post('/users/:userId/reset-password', resetPassword);
 
 // Auction management
 router.get('/auctions', getAllAuctions);
+router.delete('/auction/:auctionId', deleteAuction); 
 
 // Auction approval endpoints
 router.post('/auction/:auctionId/approve', approveAuction);
