@@ -668,10 +668,16 @@ const AuctionCard = ({
             <span className="text-gray-600">Ends:</span>
             <span className="font-medium">{new Date(auction.endsAt).toLocaleDateString()}</span>
           </div>
-          {(auction.bids?.length >= 0 || auction._count?.bids >= 0) && (
+          {/* {(auction.bids?.length >= 0 || auction._count?.bids >= 0) && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Total Bids:</span>
               <span className="font-medium">{auction.bids?.length || auction._count?.bids || 0}</span>
+            </div>
+          )} */}
+          {(auction._count?.bids >= 0 || auction.bids?.length >= 0) && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Total Bids:</span>
+              <span className="font-medium">{auction._count?.bids ?? auction.bids?.length ?? 0}</span>
             </div>
           )}
         </div>
