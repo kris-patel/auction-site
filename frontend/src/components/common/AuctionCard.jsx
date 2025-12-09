@@ -707,8 +707,11 @@ const AuctionCard = ({
               variant="outline"
               className="flex-1"
             >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
+              <div className='flex justify-center'>
+
+              <Edit className="w-4 h-4 mr-2 mt-1" />
+              <div>Edit </div>
+              </div>
             </Button>
           )}
 
