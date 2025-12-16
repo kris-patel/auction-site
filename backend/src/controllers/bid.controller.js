@@ -1,5 +1,14 @@
+/**
+ * Bid Controller
+ * Handles bidding operations for active auctions
+ */
+
 import prisma from '../config/database.js';
 
+/**
+ * Place a bid on an auction
+ * Validates bid amount, auction status, and updates current price
+ */
 export const placeBid = async (req, res) => {
   try {
     const { auctionId } = req.params;
@@ -10,6 +19,7 @@ export const placeBid = async (req, res) => {
       return res.status(400).json({ error: 'Valid bid amount is required' });
     }
 
+    // Get auction with current highest bid
     const auction = await prisma.auctionItem.findUnique({
       where: { id: auctionId },
       include: {
@@ -26,26 +36,31 @@ export const placeBid = async (req, res) => {
       return res.status(404).json({ error: 'Auction not found' });
     }
 
+    // Validate auction is active
     if (auction.status !== 'active') {
       return res.status(400).json({ error: 'Auction is not active' });
     }
 
+    // Check if auction has ended
     if (new Date() > auction.endsAt) {
       return res.status(400).json({ error: 'Auction has ended' });
     }
 
+    // Prevent seller from bidding on own auction
     if (auction.sellerId === buyerId) {
       return res.status(400).json({ 
         error: 'You cannot bid on your own auction' 
       });
     }
 
+    // Validate bid is higher than current price
     if (parseFloat(bidAmount) <= auction.currentPrice) {
       return res.status(400).json({ 
         error: `Bid must be higher than current price of ${auction.currentPrice}` 
       });
     }
 
+    // Check if user is already highest bidder
     const highestBid = await prisma.bid.findFirst({
       where: { auctionId },
       orderBy: { bidAmount: 'desc' },
@@ -61,6 +76,7 @@ export const placeBid = async (req, res) => {
       });
     }
 
+    // Create bid and update auction current price in transaction
     const [bid, updatedAuction] = await prisma.$transaction([
       prisma.bid.create({
         data: {
@@ -101,6 +117,10 @@ export const placeBid = async (req, res) => {
   }
 };
 
+/**
+ * Get all bids for a specific auction
+ * Returns bids ordered by amount (highest first)
+ */
 export const getAuctionBids = async (req, res) => {
   try {
     const { auctionId } = req.params;
@@ -135,10 +155,15 @@ export const getAuctionBids = async (req, res) => {
   }
 };
 
+/**
+ * Get all bids placed by authenticated buyer
+ * Returns only latest bid per auction
+ */
 export const getMyBids = async (req, res) => {
   try {
     const buyerId = req.user.id;
 
+    // Get all bids by buyer
     const allBids = await prisma.bid.findMany({
       where: { buyerId },
       include: {
@@ -162,6 +187,7 @@ export const getMyBids = async (req, res) => {
       }
     });
 
+    // Keep only highest bid per auction
     const latestBidsMap = new Map();
     
     allBids.forEach(bid => {

@@ -1,3 +1,8 @@
+/**
+ * ProfileModal - Modal for editing user profile
+ * Allows users to update avatar, username, and password
+ */
+
 import React, { useState } from 'react';
 import { X, Upload, User, Lock, Mail } from 'lucide-react';
 import { Input } from './Input';
@@ -14,7 +19,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('avatar'); // avatar, username, password
   
-  // Form states
+  // Form state for all tabs
   const [formData, setFormData] = useState({
     username: user?.username || '',
     currentPassword: '',
@@ -22,12 +27,13 @@ const ProfileModal = ({ isOpen, onClose }) => {
     confirmPassword: ''
   });
   
+  // Avatar upload state
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
 
   if (!isOpen) return null;
 
-  // Handle avatar selection
+  // Handle avatar file selection with validation
   const handleAvatarSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -49,7 +55,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setError('');
   };
 
-  // Handle avatar upload
+  // Upload avatar to server
   const handleAvatarUpload = async () => {
     if (!avatarFile) {
       setError('Please select an image first');
@@ -70,6 +76,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
       setAvatarFile(null);
       setAvatarPreview(null);
       
+      // Close modal after success
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -80,7 +87,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Handle username update
+  // Update username
   const handleUsernameUpdate = async (e) => {
     e.preventDefault();
     
@@ -113,26 +120,29 @@ const ProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Handle password update
+  // Update password with validation
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
 
-    // Validation
+    // Validate all fields filled
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
       setError('All password fields are required');
       return;
     }
 
+    // Validate password length
     if (formData.newPassword.length < 6) {
       setError('New password must be at least 6 characters');
       return;
     }
 
+    // Validate passwords match
     if (formData.newPassword !== formData.confirmPassword) {
       setError('New passwords do not match');
       return;
     }
 
+    // Validate new password is different
     if (formData.currentPassword === formData.newPassword) {
       setError('New password must be different from current password');
       return;
@@ -146,6 +156,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
       await api.updatePassword(formData.currentPassword, formData.newPassword);
       
       setSuccess('Password updated successfully!');
+      // Clear password fields
       setFormData({
         ...formData,
         currentPassword: '',
@@ -163,6 +174,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -171,6 +183,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
     setError('');
   };
 
+  // Reset form and close modal
   const handleClose = () => {
     setFormData({
       username: user?.username || '',
@@ -200,7 +213,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* Tab navigation */}
         <div className="flex border-b">
           <button
             onClick={() => setActiveTab('avatar')}
@@ -237,8 +250,9 @@ const ProfileModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Content */}
+        {/* Content area */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          {/* Status messages */}
           {error && (
             <Alert variant="error" className="mb-4">
               {error}
@@ -255,12 +269,14 @@ const ProfileModal = ({ isOpen, onClose }) => {
           {activeTab === 'avatar' && (
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-4">
+                {/* Current/preview avatar */}
                 <Avatar
                   src={avatarPreview || user?.profileImage}
                   name={user?.username}
                   size="xl"
                 />
                 
+                {/* File selection button */}
                 <div className="text-center">
                   <p className="text-sm text-gray-600 mb-2">
                     Current profile picture
@@ -281,6 +297,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                   </label>
                 </div>
 
+                {/* Preview of selected image */}
                 {avatarPreview && (
                   <div className="w-full">
                     <p className="text-sm text-gray-700 mb-2 text-center">
@@ -301,6 +318,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 </p>
               </div>
 
+              {/* Upload button (shown when file selected) */}
               {avatarFile && (
                 <Button
                   onClick={handleAvatarUpload}
@@ -316,6 +334,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           {/* Username Tab */}
           {activeTab === 'username' && (
             <form onSubmit={handleUsernameUpdate} className="space-y-4">
+              {/* Current username display */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Username
@@ -326,6 +345,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
+              {/* New username input */}
               <Input
                 label="New Username"
                 type="text"
@@ -336,12 +356,14 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 required
               />
 
+              {/* Email display (read-only) */}
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
                 <Mail className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-600">{user?.email}</span>
               </div>
               <p className="text-xs text-gray-500">Email cannot be changed</p>
 
+              {/* Submit button */}
               <Button
                 type="submit"
                 disabled={loading || formData.username === user?.username}
@@ -355,6 +377,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           {/* Password Tab */}
           {activeTab === 'password' && (
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
+              {/* Current password */}
               <Input
                 label="Current Password"
                 type="password"
@@ -365,6 +388,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 required
               />
 
+              {/* New password */}
               <Input
                 label="New Password"
                 type="password"
@@ -375,6 +399,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 required
               />
 
+              {/* Confirm new password */}
               <Input
                 label="Confirm New Password"
                 type="password"
@@ -385,6 +410,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 required
               />
 
+              {/* Submit button */}
               <Button
                 type="submit"
                 disabled={loading}

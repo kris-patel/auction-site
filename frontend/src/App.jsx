@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * App.jsx
+ * ============================================
+ * Main application component
+ * Configures routing and role-based access control
+ */
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Gavel } from 'lucide-react';
@@ -11,7 +19,11 @@ import SellerDashboard from './components/dashboard/SellerDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import RepDashboard from './components/dashboard/RepDashboard';
 
-// Protected Route wrapper component
+/**
+ * Protected Route wrapper
+ * Redirects to login if not authenticated
+ * Checks role permissions if specified
+ */
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
@@ -37,7 +49,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-// Public Route wrapper - redirects to dashboard if already logged in
+/**
+ * Public Route wrapper
+ * Redirects to dashboard if already logged in
+ */
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -59,7 +74,10 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Dashboard router - redirects to role-specific dashboard
+/**
+ * Dashboard router
+ * Redirects to role-specific dashboard based on user role
+ */
 const DashboardRouter = () => {
   const { user } = useAuth();
 
@@ -125,10 +143,10 @@ const App = () => {
           </ProtectedRoute>
         }
       >
-        {/* Default dashboard redirect based on role */}
+        {/* Auto-redirect to role-specific dashboard */}
         <Route index element={<DashboardRouter />} />
         
-        {/* Role-specific dashboards */}
+        {/* Role-specific dashboard routes */}
         <Route 
           path="buyer" 
           element={

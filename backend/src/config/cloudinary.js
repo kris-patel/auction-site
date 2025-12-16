@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * cloudinary.js
+ * ============================================
+ * Cloudinary configuration for image uploads
+ * Configures multer storage and upload limits
+ */
+
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
@@ -5,14 +13,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configure Cloudinary
+// Configure Cloudinary with credentials
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Storage for profile images
+// Storage configuration for profile images
 const profileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -22,7 +30,7 @@ const profileStorage = new CloudinaryStorage({
   }
 });
 
-// Storage for auction images
+// Storage configuration for auction images
 const auctionStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -32,22 +40,27 @@ const auctionStorage = new CloudinaryStorage({
   }
 });
 
-// Multer upload instances
+// Multer instance for profile image uploads (single file, 5MB limit)
 export const uploadProfile = multer({
   storage: profileStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
+    fileSize: 5 * 1024 * 1024
   }
 });
 
+// Multer instance for auction image uploads (multiple files, 5MB per file)
 export const uploadAuction = multer({
   storage: auctionStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB per image
+    fileSize: 5 * 1024 * 1024
   }
 });
 
-// Helper function to delete images
+/**
+ * Delete image from Cloudinary by public ID
+ * @param {string} publicId - Cloudinary public ID
+ * @returns {Promise<boolean>} Success status
+ */
 export const deleteImage = async (publicId) => {
   try {
     await cloudinary.uploader.destroy(publicId);

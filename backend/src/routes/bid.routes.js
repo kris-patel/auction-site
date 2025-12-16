@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * bid.routes.js
+ * ============================================
+ * Routes for bidding operations
+ * Handles bid placement and retrieval
+ */
+
 import express from 'express';
 import {
   placeBid,
@@ -9,13 +17,13 @@ import { requireBuyer } from '../middleware/roleCheck.js';
 
 const router = express.Router();
 
-// Authenticated routes (any role) - must come BEFORE parameterized routes
+// Get user's own bids (must come BEFORE parameterized routes to avoid conflict)
 router.get('/my-bids', authenticateToken, requireBuyer, getMyBids);
 
-// Buyer-only routes
+// Place bid on auction (buyer only)
 router.post('/:auctionId', authenticateToken, requireBuyer, placeBid);
 
-// Get bids for an auction - authenticated
+// Get all bids for specific auction (authenticated users)
 router.get('/:auctionId', authenticateToken, getAuctionBids);
 
 export default router;

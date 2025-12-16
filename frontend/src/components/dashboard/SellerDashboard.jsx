@@ -1,3 +1,19 @@
+/**
+ * ============================================
+ * SellerDashboard.jsx
+ * ============================================
+ * Dashboard for sellers to manage their auctions
+ * 
+ * Features:
+ * - View all auctions with status filtering (pending/active/completed)
+ * - Create new auctions with images
+ * - Edit pending auctions
+ * - Delete auctions without bids
+ * - Search auctions by title, description, or category
+ * - Upload up to 5 images per auction
+ * - View detailed auction information and bid history
+ */
+
 import React, { useState, useEffect } from 'react';
 import { List, Plus, Package, Clock, CheckCircle, XCircle, Search, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

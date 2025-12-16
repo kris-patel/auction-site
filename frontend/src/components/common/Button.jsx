@@ -1,6 +1,15 @@
+// ============================================
+// Button.jsx
+// ============================================
+/**
+ * Button - Reusable button component with variant styles
+ * Supports primary, secondary, danger, and outline styles
+ */
+
 import React from 'react';
 
 export const Button = ({ children, variant = 'primary', className = '', ...props }) => {
+  // Button style variants
   const variants = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white',

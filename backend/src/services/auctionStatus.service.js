@@ -1,27 +1,25 @@
-// backend/src/services/auctionStatus.service.js
+/**
+ * ============================================
+ * auctionStatus.service.js
+ * ============================================
+ * Background service for managing auction lifecycle
+ * Automatically closes expired auctions and creates transactions
+ */
+
 import prisma from '../config/database.js';
 
 /**
- * Create transaction for winning bidder
+ * Create transaction record for auction winner
+ * Links buyer, seller, and auction with final bid amount
  */
 const createWinningTransaction = async (auction, highestBid) => {
   try {
+    // Fetch buyer profile
     let buyer = await prisma.buyer.findUnique({
       where: { userId: highestBid.buyerId }
     });
 
-    // if (!buyer) {
-    //   console.log(`Creating Buyer record for user ${highestBid.buyerId}`);
-
-    //   buyer = await prisma.buyer.create({
-    //     data: {
-    //       userId: highestBid.buyerId,
-    //       rating: 0,
-    //       purchaseCount: 0
-    //     }
-    //   });
-    // }
-
+    // Create transaction record
     const transaction = await prisma.transaction.create({
       data: {
         buyerId: buyer.id,
@@ -44,21 +42,26 @@ const createWinningTransaction = async (auction, highestBid) => {
   }
 };
 
+/**
+ * Find and close all expired active auctions
+ * Creates transaction records for auctions with winning bids
+ */
 export const updateExpiredAuctions = async () => {
   try {
     const now = new Date();
     
+    // Find all active auctions past their end date
     const expiredAuctions = await prisma.auctionItem.findMany({
       where: {
         status: 'active',
         endsAt: {
-          lte: now
+          lte: now // Less than or equal to current time
         }
       },
       include: {
         bids: {
           orderBy: { bidAmount: 'desc' },
-          take: 1,
+          take: 1, // Get highest bid only
           include: {
             buyer: {
               select: {
@@ -80,14 +83,17 @@ export const updateExpiredAuctions = async () => {
     let closedCount = 0;
     let transactionsCreated = 0;
 
+    // Process each expired auction
     for (const auction of expiredAuctions) {
       try {
+        // Update auction status to closed
         await prisma.auctionItem.update({
           where: { id: auction.id },
           data: { status: 'closed' }
         });
         closedCount++;
 
+        // Create transaction if auction has bids
         if (auction.bids.length > 0) {
           const highestBid = auction.bids[0];
           const transaction = await createWinningTransaction(auction, highestBid);
@@ -112,6 +118,10 @@ export const updateExpiredAuctions = async () => {
   }
 };
 
+/**
+ * Initialize periodic auction status checker
+ * Runs at specified interval to close expired auctions
+ */
 export const initializeCombinedStatusChecker = (intervalMinutes = 1) => {
   const intervalMs = intervalMinutes * 60 * 1000;
   
@@ -119,14 +129,17 @@ export const initializeCombinedStatusChecker = (intervalMinutes = 1) => {
   console.log(`   Checking every ${intervalMinutes} minute(s)`);
   console.log(`   Closes ACTIVE auctions and creates winner transactions`);
   
+  // Run immediately on startup
   updateExpiredAuctions()
     .then(() => console.log('✓ Initial status check complete'))
     .catch(err => console.error('✗ Initial status check failed:', err));
   
+  // Schedule periodic checks
   const interval = setInterval(() => {
     updateExpiredAuctions();
   }, intervalMs);
 
+  // Cleanup on shutdown
   process.on('SIGTERM', () => {
     console.log('Shutting down auction status checker...');
     clearInterval(interval);
@@ -135,6 +148,10 @@ export const initializeCombinedStatusChecker = (intervalMinutes = 1) => {
   return interval;
 };
 
+/**
+ * Middleware to trigger status check on user activity
+ * Updates expired auctions in background without blocking request
+ */
 export const checkStatusesMiddleware = (req, res, next) => {
   updateExpiredAuctions().catch(err => 
     console.error('Background status update failed:', err)

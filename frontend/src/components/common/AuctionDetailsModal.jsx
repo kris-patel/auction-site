@@ -1,3 +1,8 @@
+/**
+ * AuctionDetailsModal - Full details view of an auction
+ * Displays image carousel, auction info, and bidding history
+ */
+
 import React, { useState, useEffect } from 'react';
 import { X, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from './Card';
@@ -5,24 +10,26 @@ import { Alert } from './Alert';
 import api from '../../services/api';
 
 const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
-  const [bids, setBids] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [bids, setBids] = useState([]);               // Bid history
+  const [loading, setLoading] = useState(false);      // Loading state
+  const [error, setError] = useState(null);           // Error state
+  const [currentImageIndex, setCurrentImageIndex] = useState(0); // Current image in carousel
 
+  // Load bids when modal opens
   useEffect(() => {
     if (isOpen && auction) {
-      // If auction already has bids, use them; otherwise fetch
+      // Use existing bids if available, otherwise fetch
       if (auction.bids && Array.isArray(auction.bids)) {
         setBids(auction.bids);
       } else {
         loadBids();
       }
-      // Reset image index when modal opens
+      // Reset to first image
       setCurrentImageIndex(0);
     }
   }, [isOpen, auction]);
 
+  // Fetch auction bids from API
   const loadBids = async () => {
     setLoading(true);
     setError(null);
@@ -40,10 +47,12 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
   const images = auction?.images || [];
   const hasImages = images.length > 0;
 
+  // Navigate to next image
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
+  // Navigate to previous image
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
@@ -53,6 +62,7 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Header with title and close button */}
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-2xl font-bold">{auction.title}</h2>
@@ -66,17 +76,18 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Image Carousel */}
+        {/* Image carousel */}
         {hasImages ? (
           <div className="relative mb-6 bg-gray-100 rounded-lg overflow-hidden">
             <div className="aspect-video relative">
+              {/* Current image */}
               <img
                 src={images[currentImageIndex].imageUrl}
                 alt={`${auction.title} - Image ${currentImageIndex + 1}`}
                 className="w-full h-full object-contain"
               />
               
-              {/* Navigation Arrows */}
+              {/* Navigation arrows (only if multiple images) */}
               {images.length > 1 && (
                 <>
                   <button
@@ -94,13 +105,13 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
                 </>
               )}
 
-              {/* Image Counter */}
+              {/* Image counter */}
               <div className="absolute bottom-4 right-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm">
                 {currentImageIndex + 1} / {images.length}
               </div>
             </div>
 
-            {/* Thumbnail Navigation */}
+            {/* Thumbnail navigation */}
             {images.length > 1 && (
               <div className="flex gap-2 p-4 overflow-x-auto">
                 {images.map((img, index) => (
@@ -124,12 +135,13 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
             )}
           </div>
         ) : (
+          // Placeholder when no images
           <div className="mb-6 bg-gray-100 rounded-lg aspect-video flex items-center justify-center">
             <p className="text-gray-500">No images available</p>
           </div>
         )}
 
-        {/* Auction Details Grid */}
+        {/* Auction details grid */}
         <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
           <div>
             <p className="text-gray-600 text-sm">Current Price</p>
@@ -163,21 +175,24 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Bids Section */}
+        {/* Bids section */}
         <div>
           <h3 className="text-xl font-bold mb-4">Bids ({bids.length})</h3>
           
+          {/* Error message */}
           {error && (
             <Alert variant="error" className="mb-4">
               {error}
             </Alert>
           )}
 
+          {/* Loading spinner */}
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : bids.length > 0 ? (
+            // Bids table
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -205,10 +220,12 @@ const AuctionDetailsModal = ({ auction, isOpen, onClose }) => {
               </table>
             </div>
           ) : (
+            // No bids message
             <p className="text-center text-gray-500 py-8">No bids placed yet</p>
           )}
         </div>
 
+        {/* Close button */}
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}

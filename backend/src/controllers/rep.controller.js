@@ -1,6 +1,15 @@
+/**
+ * Representative Controller
+ * Handles customer service operations: user management, auction approval, password resets
+ */
+
 import prisma from '../config/database.js';
 import { hashPassword } from '../utils/bcrypt.js';
 
+/**
+ * Get all users with optional filtering
+ * Similar to admin function but for rep role
+ */
 export const getAllUsers = async (req, res) => {
   try {
     const { role, isActive } = req.query;
@@ -19,7 +28,6 @@ export const getAllUsers = async (req, res) => {
         profileImage: true,
         isActive: true,
         createdAt: true,
-        // Include role-specific data
         buyer: {
           select: {
             rating: true,
@@ -53,6 +61,9 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+/**
+ * Get all auctions with optional status filtering
+ */
 export const getAllAuctions = async (req, res) => {
   try {
     const { status } = req.query;
@@ -94,6 +105,10 @@ export const getAllAuctions = async (req, res) => {
   }
 };
 
+/**
+ * Reset user password (customer service function)
+ * Used when users forget their password
+ */
 export const resetPassword = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -119,10 +134,9 @@ export const resetPassword = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Hash new password
+    // Hash and update password
     const hashedPassword = await hashPassword(newPassword);
 
-    // Update password
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword }
@@ -135,6 +149,10 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * Delete auction (rep can delete any auction for moderation)
+ * Unlike sellers, reps can delete auctions even with bids
+ */
 export const deleteAuction = async (req, res) => {
   try {
     const { auctionId } = req.params;
@@ -151,8 +169,7 @@ export const deleteAuction = async (req, res) => {
       return res.status(404).json({ error: 'Auction not found' });
     }
 
-    // Reps can delete any auction (even with bids) for moderation purposes
-    // Delete auction (this will cascade delete images and bids)
+    // Delete auction (cascade will delete bids and images)
     await prisma.auctionItem.delete({
       where: { id: auctionId }
     });
@@ -167,6 +184,10 @@ export const deleteAuction = async (req, res) => {
   }
 };
 
+/**
+ * Get detailed information about a specific user
+ * Includes all auctions and bids
+ */
 export const getUserDetails = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -182,7 +203,6 @@ export const getUserDetails = async (req, res) => {
         isActive: true,
         createdAt: true,
         updatedAt: true,
-        // Role-specific data
         buyer: {
           select: {
             rating: true,
@@ -203,7 +223,6 @@ export const getUserDetails = async (req, res) => {
             assignedReps: true
           }
         },
-        // Related data
         auctions: {
           select: {
             id: true,
@@ -254,51 +273,10 @@ export const getUserDetails = async (req, res) => {
   }
 };
 
-// New function to approve/reject pending auctions
-// export const approveAuction = async (req, res) => {
-//   try {
-//     const { auctionId } = req.params;
-//     const { approved } = req.body; // true to approve, false to reject
-
-//     const auction = await prisma.auctionItem.findUnique({
-//       where: { id: auctionId }
-//     });
-
-//     if (!auction) {
-//       return res.status(404).json({ error: 'Auction not found' });
-//     }
-
-//     if (auction.status !== 'pending') {
-//       return res.status(400).json({ 
-//         error: 'Only pending auctions can be approved or rejected' 
-//       });
-//     }
-
-//     if (approved) {
-//       // Approve and activate
-//       const updatedAuction = await prisma.auctionItem.update({
-//         where: { id: auctionId },
-//         data: { status: 'active' }
-//       });
-
-//       res.json({
-//         message: 'Auction approved and activated',
-//         auction: updatedAuction
-//       });
-//     } else {
-//       // Reject and delete
-//       await prisma.auctionItem.delete({
-//         where: { id: auctionId }
-//       });
-
-//       res.json({ message: 'Auction rejected and deleted' });
-//     }
-//   } catch (error) {
-//     console.error('Approve auction error:', error);
-//     res.status(500).json({ error: 'Failed to process auction approval' });
-//   }
-// };
-
+/**
+ * Approve or reject pending auction
+ * Approval activates auction, rejection deletes it
+ */
 export const approveAuction = async (req, res) => {
   try {
     const { auctionId } = req.params;
@@ -328,7 +306,7 @@ export const approveAuction = async (req, res) => {
     }
 
     if (approved) {
-      // Approve and activate
+      // Approve and activate auction
       const updatedAuction = await prisma.auctionItem.update({
         where: { id: auctionId },
         data: { status: 'active' },
@@ -343,7 +321,7 @@ export const approveAuction = async (req, res) => {
         auction: updatedAuction
       });
     } else {
-      // Reject and delete (or you could add a 'rejected' status instead)
+      // Reject and delete auction
       await prisma.auctionItem.delete({
         where: { id: auctionId }
       });
@@ -359,12 +337,16 @@ export const approveAuction = async (req, res) => {
   }
 };
 
-// NEW: Update auction status (for reps to change active → closed, etc.)
+/**
+ * Update auction status manually
+ * Allows reps to change status between active, closed, pending
+ */
 export const updateAuctionStatus = async (req, res) => {
   try {
     const { auctionId } = req.params;
-    const { status } = req.body; // 'active', 'closed', 'pending'
+    const { status } = req.body;
 
+    // Validate status value
     if (!['active', 'closed', 'pending'].includes(status)) {
       return res.status(400).json({ 
         error: 'Invalid status. Must be: active, closed, or pending' 

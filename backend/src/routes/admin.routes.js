@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * admin.routes.js
+ * ============================================
+ * Routes for admin-only operations
+ * Handles user/rep/admin creation and management
+ */
+
 import express from 'express';
 import {
   createRep,
@@ -14,10 +22,10 @@ import { requireAdmin } from '../middleware/roleCheck.js';
 
 const router = express.Router();
 
-// All routes require admin role
+// Apply authentication and admin role check to all routes
 router.use(authenticateToken, requireAdmin);
 
-// User management
+// User management routes
 router.post('/create-rep', createRep);
 router.post('/create-admin', createAdmin);
 router.get('/users', getAllUsers);
@@ -25,7 +33,7 @@ router.patch('/users/:id/deactivate', deactivateUser);
 router.patch('/users/:id/activate', activateUser);
 router.delete('/users/:id', deleteUser);
 
-// Auction management
+// Auction management routes
 router.get('/auctions', getAllAuctions);
 router.patch('/auctions/:id/approve', approveAuction);
 

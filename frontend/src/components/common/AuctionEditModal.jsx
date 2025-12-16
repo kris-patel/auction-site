@@ -1,3 +1,8 @@
+/**
+ * AuctionEditModal - Modal for editing auction details
+ * Allows editing title, description, category, price, end date, and images
+ */
+
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { Card } from './Card';
@@ -8,6 +13,7 @@ import { Alert } from './Alert';
 import api from '../../services/api';
 
 const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }) => {
+  // Form data state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -15,18 +21,21 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
     startingPrice: '',
     endsAt: ''
   });
+  
+  // Image management states
   const [newImages, setNewImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
+  
+  // UI states
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Helper function to format date for datetime-local input
+  // Format date to datetime-local input format (YYYY-MM-DDTHH:mm)
   const formatDateTimeLocal = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    // Format as YYYY-MM-DDTHH:mm (required for datetime-local input)
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -35,7 +44,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Populate form when auction changes
+  // Populate form when auction data changes
   useEffect(() => {
     if (auction && isOpen) {
       setFormData({
@@ -53,14 +62,17 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
     }
   }, [auction, isOpen]);
 
+  // Handle new image selection with validation
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     
+    // Check total image limit (5 max)
     if (files.length + existingImages.length - imagesToDelete.length > 5) {
       setMessage({ type: 'error', text: 'Maximum 5 images allowed' });
       return;
     }
 
+    // Validate each file
     const validFiles = [];
     for (const file of files) {
       if (!file.type.startsWith('image/')) {
@@ -76,20 +88,23 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
 
     if (validFiles.length === 0) return;
 
+    // Add valid files and create previews
     setNewImages([...newImages, ...validFiles]);
     const newPreviews = validFiles.map(file => URL.createObjectURL(file));
     setImagePreviews([...imagePreviews, ...newPreviews]);
     setMessage(null);
   };
 
+  // Remove newly selected image before upload
   const removeNewImage = (index) => {
     setNewImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => {
-      URL.revokeObjectURL(prev[index]);
+      URL.revokeObjectURL(prev[index]); // Clean up memory
       return prev.filter((_, i) => i !== index);
     });
   };
 
+  // Toggle existing image for deletion
   const markExistingImageForDelete = (imageId) => {
     if (imagesToDelete.includes(imageId)) {
       setImagesToDelete(prev => prev.filter(id => id !== imageId));
@@ -98,13 +113,14 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
     }
   };
 
+  // Submit form with auction updates and image changes
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
     try {
-      // Convert datetime-local value to ISO string for backend
+      // Prepare data for submission
       const submitData = {
         ...formData,
         startingPrice: parseFloat(formData.startingPrice),
@@ -144,7 +160,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
 
   const totalImages = existingImages.length - imagesToDelete.length + newImages.length;
 
-  // Get minimum datetime (current time in local timezone)
+  // Get minimum datetime (current time) for validation
   const getMinDateTime = () => {
     const now = new Date();
     return formatDateTimeLocal(now.toISOString());
@@ -153,6 +169,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Edit Auction</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -160,6 +177,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
           </button>
         </div>
 
+        {/* Status messages */}
         {message && (
           <Alert variant={message.type} className="mb-4">
             {message.text}
@@ -167,6 +185,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title input */}
           <Input
             label="Title"
             value={formData.title}
@@ -174,6 +193,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
             required
           />
 
+          {/* Description textarea */}
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
@@ -185,6 +205,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
             />
           </div>
 
+          {/* Category select */}
           <Select
             label="Category"
             value={formData.category}
@@ -198,37 +219,24 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
             ]}
           />
 
-          {/* <Input
-            label="Starting Price"
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={formData.startingPrice}
-            onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
-            placeholder="0.00"
-            required
-          /> */}
-
+          {/* Starting price input with dollar sign */}
           <div className='text-sm text-gray-700 -mb-2 font-medium'>
-                         Starting Price
-                        <div className='flex my-2'>
-                          <div className='mr-3 my-2'>
-                           $
-                          </div>
-                          <div className='flex-grow'>
-                           <Input
-                          // label="Starting Price"
-                          type="number"
-                          step="0.01"
-                          value={formData.startingPrice}
-                          onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
-                          required
-                         />
-                          </div>
-                        </div>
-          
-                      </div>
+            Starting Price
+            <div className='flex my-2'>
+              <div className='mr-3 my-2'>$</div>
+              <div className='flex-grow'>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.startingPrice}
+                  onChange={(e) => setFormData({ ...formData, startingPrice: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
+          {/* End date and time picker */}
           <Input
             label="End Date & Time"
             type="datetime-local"
@@ -238,13 +246,13 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
             required
           />
 
-          {/* Image Management */}
+          {/* Image management section */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               Auction Images ({totalImages}/5)
             </label>
 
-            {/* Existing Images */}
+            {/* Existing images grid */}
             {existingImages.length > 0 && (
               <div>
                 <p className="text-xs text-gray-600 mb-2">Current Images</p>
@@ -260,6 +268,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
                             : 'border-gray-300'
                         }`}
                       />
+                      {/* Delete/undo button */}
                       <button
                         type="button"
                         onClick={() => markExistingImageForDelete(img.id)}
@@ -272,6 +281,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
                       >
                         {imagesToDelete.includes(img.id) ? '↺' : <Trash2 className="w-4 h-4" />}
                       </button>
+                      {/* Primary image indicator */}
                       {img.isPrimary && (
                         <span className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
                           Primary
@@ -283,7 +293,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
               </div>
             )}
 
-            {/* New Images */}
+            {/* New images preview grid */}
             {imagePreviews.length > 0 && (
               <div>
                 <p className="text-xs text-gray-600 mb-2">New Images to Upload</p>
@@ -308,7 +318,7 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
               </div>
             )}
 
-            {/* Upload New Images */}
+            {/* Add new images button */}
             {totalImages < 5 && (
               <div className="flex items-center gap-2">
                 <input
@@ -333,21 +343,12 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action buttons */}
           <div className="flex gap-2 pt-4">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
           </div>
@@ -358,4 +359,3 @@ const AuctionEditModal = ({ auction, isOpen, onClose, onSuccess, isRep = false }
 };
 
 export default AuctionEditModal;
-

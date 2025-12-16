@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * Layout.jsx
+ * ============================================
+ * Main dashboard layout component
+ * Provides header with user profile and logout
+ */
+
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
@@ -25,16 +33,16 @@ const Layout = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo/Title */}
+            {/* Logo */}
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-blue-600">Auction Platform</h1>
             </div>
 
-            {/* User Info & Logout */}
+            {/* User Info & Actions */}
             <div className="flex items-center gap-4">
               {user && (
                 <>
-                  {/* User Profile Section - Clickable */}
+                  {/* Clickable User Profile Section */}
                   <div 
                     onClick={handleProfileClick}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
@@ -65,12 +73,12 @@ const Layout = () => {
         </div>
       </header>
 
-      {/* Main Content - Renders child routes */}
+      {/* Main Content Area - Renders nested routes */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
 
-      {/* Profile Modal */}
+      {/* Profile Edit Modal */}
       <ProfileModal 
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}

@@ -1,3 +1,18 @@
+/**
+ * ============================================
+ * BuyerDashboard.jsx
+ * ============================================
+ * Dashboard for buyers to browse auctions and manage bids
+ * 
+ * Features:
+ * - Browse active auctions with search functionality
+ * - Place bids on auctions
+ * - View bid history and status (winning/outbid/won/lost)
+ * - Filter auctions by various criteria
+ * - Real-time bid status tracking
+ * - View detailed auction information
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Gavel, Clock, CheckCircle, TrendingUp, Award, AlertCircle, Search, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

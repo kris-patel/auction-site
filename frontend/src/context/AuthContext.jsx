@@ -1,8 +1,20 @@
+/**
+ * ============================================
+ * AuthContext.jsx
+ * ============================================
+ * Global authentication state management
+ * Handles login, logout, and user data persistence
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
+/**
+ * Hook to access auth context
+ * Must be used within AuthProvider
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -11,11 +23,16 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Authentication Provider Component
+ * Manages user state and localStorage sync
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Load user data from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -34,6 +51,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  /**
+   * Login user and store credentials
+   * Redirects to dashboard after successful login
+   */
   const login = (userData, token) => {
     if (!userData || !token) {
       console.error("Invalid login data", { userData, token });
@@ -43,10 +64,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
-    // Navigate to dashboard after successful login
     navigate('/dashboard');
   };
 
+  /**
+   * Logout user and clear stored data
+   * Redirects to login page
+   */
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -54,7 +78,10 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  // Update user profile in context and localStorage
+  /**
+   * Update user profile in context and localStorage
+   * Used after profile updates (image, username, etc.)
+   */
   const updateUser = (updates) => {
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);

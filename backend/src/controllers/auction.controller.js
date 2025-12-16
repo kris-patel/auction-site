@@ -1,6 +1,13 @@
+/**
+ * Auction Controller
+ * Handles auction CRUD operations and lifecycle management
+ */
+
 import prisma from '../config/database.js';
 
-// Add new function to get auctions with status filter
+/**
+ * Get auctions filtered by status (active/pending/completed)
+ */
 export const getAuctionsByStatus = async (req, res) => {
   try {
     const { status } = req.query;
@@ -70,6 +77,9 @@ export const getAuctionsByStatus = async (req, res) => {
   }
 };
 
+/**
+ * Get all active (non-expired) auctions
+ */
 export const getActiveAuctions = async (req, res) => {
   try {
     const auctions = await prisma.auctionItem.findMany({
@@ -124,6 +134,9 @@ export const getActiveAuctions = async (req, res) => {
   }
 };
 
+/**
+ * Get single auction by ID with full details
+ */
 export const getAuctionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -171,6 +184,9 @@ export const getAuctionById = async (req, res) => {
   }
 };
 
+/**
+ * Get all auctions created by authenticated seller
+ */
 export const getMyAuctions = async (req, res) => {
   try {
     const sellerId = req.user.id;
@@ -238,6 +254,10 @@ export const getMyAuctions = async (req, res) => {
   }
 };
 
+/**
+ * Delete auction (only if no bids exist)
+ * Sellers can delete own auctions, reps/admins can delete any
+ */
 export const deleteAuction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -255,13 +275,14 @@ export const deleteAuction = async (req, res) => {
       return res.status(404).json({ error: 'Auction not found' });
     }
 
-    // Sellers can only delete their own auctions, reps/admins can delete any
+    // Check ownership for sellers
     if (userRole === 'seller' && auction.sellerId !== userId) {
       return res.status(403).json({ 
         error: 'You can only delete your own auctions' 
       });
     }
 
+    // Prevent deletion if bids exist
     if (auction.bids.length > 0) {
       return res.status(400).json({ 
         error: 'Cannot delete auction with existing bids' 
@@ -279,6 +300,9 @@ export const deleteAuction = async (req, res) => {
   }
 };
 
+/**
+ * Approve pending auction (rep/admin only)
+ */
 export const approveAuction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -321,9 +345,9 @@ export const approveAuction = async (req, res) => {
   }
 };
 
-// CHANGES NEEDED TO auction.controller.js
-
-// In createAuction function - REPLACE the date validation section:
+/**
+ * Create new auction (status: pending, awaiting approval)
+ */
 export const createAuction = async (req, res) => {
   try {
     console.log('Create auction request received');
@@ -336,11 +360,11 @@ export const createAuction = async (req, res) => {
       });
     }
 
-    // ✅ FIXED: Parse the ISO date string properly
+    // Parse and validate end date
     const endDate = new Date(endsAt);
     const now = new Date();
     
-    // Add 5 second buffer to account for network latency
+    // Add buffer to account for network latency
     const nowWithBuffer = new Date(now.getTime() - 5000);
     
     if (endDate <= nowWithBuffer) {
@@ -364,7 +388,7 @@ export const createAuction = async (req, res) => {
         currentPrice: parseFloat(startingPrice),
         endsAt: endDate,
         sellerId,
-        status: 'pending'
+        status: 'pending' // Requires admin/rep approval
       },
       include: {
         seller: {
@@ -390,107 +414,13 @@ export const createAuction = async (req, res) => {
   }
 };
 
-// In updateAuction function - REPLACE the endsAt handling section:
-// export const updateAuction = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { title, description, category, endsAt } = req.body;
-//     const userId = req.user.id;
-//     const userRole = req.user.role;
-
-//     const auction = await prisma.auctionItem.findUnique({
-//       where: { id },
-//       include: {
-//         bids: true
-//       }
-//     });
-
-//     if (!auction) {
-//       return res.status(404).json({ error: 'Auction not found' });
-//     }
-
-//     if (userRole === 'seller' && auction.sellerId !== userId) {
-//       return res.status(403).json({ 
-//         error: 'You can only update your own auctions' 
-//       });
-//     }
-
-//     if (auction.bids.length > 0) {
-//       return res.status(400).json({ 
-//         error: 'Cannot edit auction with existing bids' 
-//       });
-//     }
-
-//     if (auction.status !== 'pending') {
-//       return res.status(400).json({ 
-//         error: 'Only pending auctions can be edited' 
-//       });
-//     }
-
-//     const updateData = {};
-//     if (title) updateData.title = title;
-//     if (description) updateData.description = description;
-//     if (category !== undefined) updateData.category = category;
-    
-//     // ✅ FIXED: Proper date validation
-//     if (endsAt) {
-//       const endDate = new Date(endsAt);
-//       const now = new Date();
-      
-//       // Add 5 second buffer to account for network latency
-//       const nowWithBuffer = new Date(now.getTime() - 5000);
-      
-//       if (endDate <= nowWithBuffer) {
-//         return res.status(400).json({ 
-//           error: 'End date must be in the future',
-//           debug: {
-//             received: endsAt,
-//             parsed: endDate.toISOString(),
-//             current: now.toISOString()
-//           }
-//         });
-//       }
-//       updateData.endsAt = endDate;
-//     }
-
-//     const updatedAuction = await prisma.auctionItem.update({
-//       where: { id },
-//       data: updateData,
-//       include: {
-//         seller: {
-//           select: {
-//             id: true,
-//             username: true,
-//             email: true
-//           }
-//         },
-//         images: {
-//           orderBy: {
-//             displayOrder: 'asc'
-//           }
-//         },
-//         _count: {
-//           select: {
-//             bids: true
-//           }
-//         }
-//       }
-//     });
-
-//     res.json({
-//       message: 'Auction updated successfully',
-//       auction: updatedAuction
-//     });
-//   } catch (error) {
-//     console.error('Update auction error:', error);
-//     res.status(500).json({ error: 'Failed to update auction' });
-//   }
-// };
-
+/**
+ * Update pending auction (only if no bids exist)
+ */
 export const updateAuction = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, startingPrice, endsAt } = req.body; // ✅ ADD startingPrice here
+    const { title, description, category, startingPrice, endsAt } = req.body;
     const userId = req.user.id;
     const userRole = req.user.role;
 
@@ -505,12 +435,14 @@ export const updateAuction = async (req, res) => {
       return res.status(404).json({ error: 'Auction not found' });
     }
 
+    // Check ownership for sellers
     if (userRole === 'seller' && auction.sellerId !== userId) {
       return res.status(403).json({ 
         error: 'You can only update your own auctions' 
       });
     }
 
+    // Only allow editing pending auctions without bids
     if (auction.bids.length > 0) {
       return res.status(400).json({ 
         error: 'Cannot edit auction with existing bids' 
@@ -523,12 +455,13 @@ export const updateAuction = async (req, res) => {
       });
     }
 
+    // Build update object
     const updateData = {};
     if (title) updateData.title = title;
     if (description) updateData.description = description;
     if (category !== undefined) updateData.category = category;
     
-    // ✅ ADD THIS: Handle startingPrice update
+    // Handle starting price update
     if (startingPrice !== undefined) {
       const price = parseFloat(startingPrice);
       if (isNaN(price) || price <= 0) {
@@ -537,16 +470,15 @@ export const updateAuction = async (req, res) => {
         });
       }
       updateData.startingPrice = price;
-      // Also update currentPrice if no bids exist
       if (auction.bids.length === 0) {
         updateData.currentPrice = price;
       }
     }
     
+    // Handle end date update
     if (endsAt) {
       const endDate = new Date(endsAt);
       const now = new Date();
-      
       const nowWithBuffer = new Date(now.getTime() - 5000);
       
       if (endDate <= nowWithBuffer) {

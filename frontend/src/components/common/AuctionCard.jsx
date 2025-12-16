@@ -1,3 +1,8 @@
+/**
+ * AuctionCard - Displays auction details with action buttons
+ * Shows image, price, status, and conditional buttons based on user role
+ */
+
 import React from 'react';
 import { Gavel, Edit, Trash2, XCircle } from 'lucide-react';
 import { Card } from './Card';
@@ -16,12 +21,14 @@ const AuctionCard = ({
   showCloseButton = false,
   isLoading = false 
 }) => {
+  // Truncate text to specified length with ellipsis
   const truncateText = (text, maxLength = 80) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
 
+  // Get status color for text
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'active':
@@ -35,6 +42,7 @@ const AuctionCard = ({
     }
   };
 
+  // Generate styled status badge
   const getStatusBadge = (status) => {
     const color = getStatusColor(status);
     return (
@@ -48,6 +56,7 @@ const AuctionCard = ({
     );
   };
 
+  // Handle card click to view details
   const handleCardClick = () => {
     console.log("Card clicked! Auction details:", auction);
     onViewDetails(auction);
@@ -59,7 +68,7 @@ const AuctionCard = ({
       onClick={handleCardClick}
     >
       <Card className="flex flex-col h-full">
-      {/* Auction Image - Fixed height */}
+      {/* Auction Image with hover overlay */}
       <div className="mb-3 -mx-6 -mt-6 h-48 bg-gray-100 rounded-t-lg overflow-hidden flex-shrink-0 relative">
         {auction.images && auction.images.length > 0 ? (
           <>
@@ -68,7 +77,7 @@ const AuctionCard = ({
               alt={auction.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
-            {/* Click to view overlay on hover */}
+            {/* Hover overlay */}
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
               <span className="text-white font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                 Click to view details
@@ -83,13 +92,13 @@ const AuctionCard = ({
             </span>
           </div>
         )}
-        {/* Status Badge Overlay */}
+        {/* Status badge overlay */}
         <div className="absolute top-2 right-2">
           {getStatusBadge(auction.status)}
         </div>
       </div>
 
-      {/* Content - Flex grow to fill space */}
+      {/* Auction details */}
       <div className="flex flex-col flex-grow">
         <h3 className="font-bold text-lg mb-2 line-clamp-1" title={auction.title}>
           {auction.title}
@@ -98,6 +107,7 @@ const AuctionCard = ({
           {truncateText(auction.description, 80)}
         </p>
         
+        {/* Auction information grid */}
         <div className="space-y-2 mb-4 flex-grow">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Current Price:</span>
@@ -123,12 +133,7 @@ const AuctionCard = ({
             <span className="text-gray-600">Ends:</span>
             <span className="font-medium">{new Date(auction.endsAt).toLocaleDateString()}</span>
           </div>
-          {/* {(auction.bids?.length >= 0 || auction._count?.bids >= 0) && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Total Bids:</span>
-              <span className="font-medium">{auction.bids?.length || auction._count?.bids || 0}</span>
-            </div>
-          )} */}
+          {/* Total bids count */}
           {(auction._count?.bids >= 0 || auction.bids?.length >= 0) && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Total Bids:</span>
@@ -137,50 +142,46 @@ const AuctionCard = ({
           )}
         </div>
 
-        {/* Action Buttons - At bottom */}
+        {/* Action buttons - conditional based on user role */}
         <div className="flex gap-2 mt-auto">
-          {/* Place Bid Button - For buyers */}
+          {/* Place Bid - for buyers */}
           {showBidButton && (
             <Button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click
+                e.stopPropagation(); // Prevent card click event
                 onPlaceBid(auction);
               }}
               className="flex-1"
               disabled={auction.status !== 'active'}
             >
               <div className='flex justify-center'>
-                {/* <Gavel className="w-4 h-4 mr-2" /> */}
-                <div>
-                  Place bid
-                </div>
+                <div>Place bid</div>
               </div>
             </Button>
           )}
 
-          {/* Edit Button - For sellers */}
+          {/* Edit - for sellers */}
           {showEditButton && (
             <Button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click
+                e.stopPropagation();
                 onEdit(auction);
               }}
               variant="outline"
               className="flex-1"
             >
               <div className='flex justify-center'>
-
-              <Edit className="w-4 h-4 mr-2 mt-1" />
-              <div>Edit </div>
+                <Edit className="w-4 h-4 mr-2 mt-1" />
+                <div>Edit</div>
               </div>
             </Button>
           )}
 
-          {/* Close Auction Button - For sellers with active auctions */}
+          {/* Close Auction - for sellers with active auctions */}
           {showCloseButton && auction.status === 'active' && (
             <Button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click
+                e.stopPropagation();
                 onClose(auction);
               }}
               variant="danger"
@@ -191,20 +192,19 @@ const AuctionCard = ({
             </Button>
           )}
 
-          {/* Delete Button - For sellers */}
+          {/* Delete - for sellers */}
           {showDeleteButton && (
             <Button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click
+                e.stopPropagation();
                 onDelete(auction);
               }}
               variant="danger"
               className="flex-1"
             >
               <div className='flex justify-center'>
-
-              <Trash2 className="w-4 h-4 mr-2 my-1" />
-              Delete
+                <Trash2 className="w-4 h-4 mr-2 my-1" />
+                Delete
               </div>
             </Button>
           )}

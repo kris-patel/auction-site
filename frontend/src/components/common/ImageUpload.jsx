@@ -1,37 +1,45 @@
+/**
+ * ImageUpload - Component for selecting and uploading images
+ * Supports single/multiple file upload with preview and validation
+ */
+
 import React, { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { Button } from './Button';
 import { Alert } from './Alert';
 
 const ImageUpload = ({ 
-  onUpload, 
-  multiple = false, 
-  maxFiles = 5,
-  currentImage = null,
-  label = "Upload Image"
+  onUpload,              // Callback function for upload
+  multiple = false,      // Allow multiple file selection
+  maxFiles = 5,         // Maximum number of files
+  currentImage = null,  // Currently uploaded image URL
+  label = "Upload Image" 
 }) => {
-  const [previews, setPreviews] = useState([]);
-  const [error, setError] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  const [previews, setPreviews] = useState([]);      // Array of preview objects
+  const [error, setError] = useState('');             // Error message
+  const [uploading, setUploading] = useState(false);  // Upload loading state
+  const fileInputRef = useRef(null);                  // Reference to file input
 
+  // Handle file selection with validation
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setError('');
 
-    // Validate file count
+    // Validate total file count
     if (multiple && files.length > maxFiles) {
       setError(`Maximum ${maxFiles} images allowed`);
       return;
     }
 
-    // Validate file types and sizes
+    // Validate each file
     const validFiles = [];
     for (const file of files) {
+      // Check file type
       if (!file.type.startsWith('image/')) {
         setError('Only image files are allowed');
         continue;
       }
+      // Check file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size must be less than 5MB');
         continue;
@@ -41,7 +49,7 @@ const ImageUpload = ({
 
     if (validFiles.length === 0) return;
 
-    // Create previews
+    // Create preview objects with file and URL
     const newPreviews = validFiles.map(file => ({
       file,
       url: URL.createObjectURL(file),
@@ -51,6 +59,7 @@ const ImageUpload = ({
     setPreviews(newPreviews);
   };
 
+  // Upload selected files
   const handleUpload = async () => {
     if (previews.length === 0) {
       setError('Please select at least one image');
@@ -62,7 +71,10 @@ const ImageUpload = ({
 
     try {
       const files = previews.map(p => p.file);
+      // Pass single file or array based on multiple prop
       await onUpload(multiple ? files : files[0]);
+      
+      // Clear previews and reset input
       setPreviews([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -74,12 +86,14 @@ const ImageUpload = ({
     }
   };
 
+  // Remove preview by index
   const removePreview = (index) => {
     setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
     <div className="space-y-4">
+      {/* File selection and upload buttons */}
       <div className="flex items-center gap-4">
         <input
           ref={fileInputRef}
@@ -90,6 +104,7 @@ const ImageUpload = ({
           className="hidden"
         />
         
+        {/* Select files button */}
         <Button
           type="button"
           variant="outline"
@@ -100,6 +115,7 @@ const ImageUpload = ({
           {label}
         </Button>
 
+        {/* Upload button (shown when files selected) */}
         {previews.length > 0 && (
           <Button
             type="button"
@@ -111,11 +127,12 @@ const ImageUpload = ({
         )}
       </div>
 
+      {/* Error message */}
       {error && (
         <Alert variant="error">{error}</Alert>
       )}
 
-      {/* Current Image Display */}
+      {/* Current image display */}
       {currentImage && previews.length === 0 && (
         <div className="relative">
           <img
@@ -127,7 +144,7 @@ const ImageUpload = ({
         </div>
       )}
 
-      {/* Image Previews */}
+      {/* Image previews grid */}
       {previews.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {previews.map((preview, index) => (
@@ -137,6 +154,7 @@ const ImageUpload = ({
                 alt={preview.name}
                 className="w-full h-32 object-cover rounded-lg border-2 border-blue-300"
               />
+              {/* Remove preview button */}
               <button
                 type="button"
                 onClick={() => removePreview(index)}
@@ -150,6 +168,7 @@ const ImageUpload = ({
         </div>
       )}
 
+      {/* Upload guidelines */}
       {multiple && (
         <p className="text-sm text-gray-500">
           Maximum {maxFiles} images • JPG, PNG, or WebP • Max 5MB each

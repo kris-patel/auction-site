@@ -1,10 +1,21 @@
+/**
+ * ============================================
+ * database.js
+ * ============================================
+ * Prisma database client configuration
+ */
+
 import { PrismaClient } from '@prisma/client';
 
+// Initialize Prisma client with logging
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
 });
 
-// Test database connection
+/**
+ * Test and establish database connection
+ * Exits process if connection fails
+ */
 export const connectDB = async () => {
   try {
     await prisma.$connect();
@@ -15,7 +26,7 @@ export const connectDB = async () => {
   }
 };
 
-// Graceful shutdown
+// Gracefully disconnect on process exit
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });

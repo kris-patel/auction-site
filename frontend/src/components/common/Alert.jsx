@@ -1,7 +1,16 @@
+// ============================================
+// Alert.jsx
+// ============================================
+/**
+ * Alert - Displays informational, error, or success messages
+ * Color-coded based on variant type
+ */
+
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export const Alert = ({ children, variant = 'info' }) => {
+  // Color schemes for different alert types
   const colors = {
     info: 'bg-blue-50 text-blue-800 border-blue-200',
     error: 'bg-red-50 text-red-800 border-red-200',
@@ -15,6 +24,3 @@ export const Alert = ({ children, variant = 'info' }) => {
     </div>
   );
 };
-
-
-

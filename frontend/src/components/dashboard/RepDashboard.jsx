@@ -1,3 +1,19 @@
+/**
+ * ============================================
+ * RepDashboard.jsx
+ * ============================================
+ * Dashboard for customer representatives to moderate platform
+ * 
+ * Features:
+ * - View and search all users
+ * - View and search all auctions
+ * - Approve or reject pending auctions
+ * - Edit auction details
+ * - Delete auctions for moderation purposes
+ * - Filter auctions by status (pending/active/completed)
+ * - Update auction status manually
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Users, Trash2, Clock, CheckCircle, XCircle, Edit, Search, X } from 'lucide-react';
 import { Alert } from '../common/Alert';

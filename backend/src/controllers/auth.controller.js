@@ -1,7 +1,16 @@
+/**
+ * Authentication Controller
+ * Handles user registration, login, and profile retrieval
+ */
+
 import prisma from '../config/database.js';
 import { hashPassword, comparePassword } from '../utils/bcrypt.js';
 import { generateToken } from '../utils/jwt.js';
 
+/**
+ * Register new user (buyer or seller only)
+ * Creates user account with role-specific profile
+ */
 export const register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
@@ -34,7 +43,7 @@ export const register = async (req, res) => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user with role-specific profile in a transaction
+    // Create user with role-specific profile in transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create base user
       const user = await tx.user.create({
@@ -54,7 +63,7 @@ export const register = async (req, res) => {
         }
       });
 
-      // Create role-specific profile
+      // Create buyer profile if role is buyer
       if (role === 'buyer') {
         await tx.buyer.create({
           data: {
@@ -68,7 +77,7 @@ export const register = async (req, res) => {
       return user;
     });
 
-    // Generate token
+    // Generate JWT token
     const token = generateToken({ 
       id: result.id, 
       email: result.email, 
@@ -93,6 +102,10 @@ export const register = async (req, res) => {
   }
 };
 
+/**
+ * Login user with email and password
+ * Returns JWT token and user data on success
+ */
 export const login = async (req, res) => {
   try {
     console.log('Login request:', req.body);
@@ -103,7 +116,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user - ✅ SELECT profileImage from database
+    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
@@ -112,7 +125,7 @@ export const login = async (req, res) => {
         email: true,
         password: true,
         role: true,
-        profileImage: true, // ✅ ADDED
+        profileImage: true,
         isActive: true
       }
     });
@@ -121,7 +134,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check if user is active
+    // Check if account is active
     if (!user.isActive) {
       return res.status(403).json({ error: 'Account is deactivated' });
     }
@@ -133,7 +146,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate token
+    // Generate JWT token
     const token = generateToken({ 
       id: user.id, 
       email: user.email, 
@@ -150,7 +163,7 @@ export const login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        profileImage: user.profileImage // ✅ ADDED - Include in response
+        profileImage: user.profileImage
       }
     });
   } catch (error) {
@@ -159,6 +172,9 @@ export const login = async (req, res) => {
   }
 };
 
+/**
+ * Get authenticated user's profile with role-specific data
+ */
 export const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({

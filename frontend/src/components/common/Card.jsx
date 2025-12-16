@@ -1,3 +1,11 @@
+// ============================================
+// Card.jsx
+// ============================================
+/**
+ * Card - Container component with white background and shadow
+ * Used as a wrapper for content sections
+ */
+
 import React from 'react';
 
 export const Card = ({ children, className = '' }) => (

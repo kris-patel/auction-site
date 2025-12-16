@@ -1,8 +1,16 @@
+/**
+ * Profile Controller
+ * Handles user profile updates (image, username, password)
+ */
+
 import prisma from '../config/database.js';
 import { hashPassword, comparePassword } from '../utils/bcrypt.js';
 import { deleteImage } from '../config/cloudinary.js';
 
-// Update profile image
+/**
+ * Update user profile image
+ * Deletes old image from Cloudinary before uploading new one
+ */
 export const updateProfileImage = async (req, res) => {
   try {
     console.log('=== Update Profile Image ===');
@@ -15,11 +23,11 @@ export const updateProfileImage = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const imageUrl = req.file.path; // Cloudinary URL
+    const imageUrl = req.file.path; // Cloudinary URL from multer
 
     console.log('New image URL:', imageUrl);
 
-    // Get current user to check for existing profile image
+    // Get current profile image
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { profileImage: true }
@@ -68,7 +76,10 @@ export const updateProfileImage = async (req, res) => {
   }
 };
 
-// Update username
+/**
+ * Update username
+ * Checks for uniqueness before updating
+ */
 export const updateUsername = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -115,7 +126,10 @@ export const updateUsername = async (req, res) => {
   }
 };
 
-// Update password
+/**
+ * Update password
+ * Validates current password before updating
+ */
 export const updatePassword = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -158,10 +172,9 @@ export const updatePassword = async (req, res) => {
       });
     }
 
-    // Hash new password
+    // Hash and update password
     const hashedPassword = await hashPassword(newPassword);
 
-    // Update password
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword }
@@ -176,15 +189,18 @@ export const updatePassword = async (req, res) => {
   }
 };
 
-// Helper function to extract public ID from Cloudinary URL
+/**
+ * Helper function to extract Cloudinary public ID from URL
+ * Used for deleting images from Cloudinary
+ */
 const extractPublicId = (url) => {
   try {
-    // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/{folder}/{public_id}.{format}
+    // Cloudinary URL format: https://res.cloudinary.com/{cloud}/image/upload/{folder}/{id}.{ext}
     const parts = url.split('/');
     const filename = parts[parts.length - 1];
     const publicIdWithFormat = filename.split('.')[0];
     
-    // Find the folder path (auction-platform/profiles)
+    // Find upload index to construct folder path
     const uploadIndex = parts.indexOf('upload');
     if (uploadIndex !== -1 && uploadIndex + 2 < parts.length) {
       const folder = parts.slice(uploadIndex + 1, -1).join('/');

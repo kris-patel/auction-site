@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * auction.routes.js
+ * ============================================
+ * Routes for auction operations
+ * Handles CRUD operations and status management
+ */
+
 import express from 'express';
 import {
   getActiveAuctions,
@@ -10,8 +18,6 @@ import {
 } from '../controllers/auction.controller.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { requireSeller, requireRole } from '../middleware/roleCheck.js';
-
-// ⭐ NEW: Import status update function
 import { updateExpiredAuctions } from '../services/auctionStatus.service.js';
 
 const router = express.Router();
@@ -25,16 +31,12 @@ router.get('/:id', authenticateToken, getAuctionById);
 router.post('/', authenticateToken, requireSeller, createAuction);
 router.get('/seller/mine', authenticateToken, requireSeller, getMyAuctions);
 
-// Allow both sellers and reps to edit auctions
+// Update and delete routes (sellers can modify own, reps can modify any)
 router.put('/:id', authenticateToken, updateAuction);
-
-// Allow both sellers and reps to delete auctions
 router.delete('/:id', authenticateToken, requireRole('seller', 'rep'), deleteAuction);
 
-// ⭐ NEW: Manual status update endpoint (Admin/Rep only)
-// POST /api/auctions/update-statuses
-// Useful for testing or manual triggers
-// ONLY closes expired active auctions (does NOT approve pending ones)
+// Manual status update endpoint (Admin/Rep only)
+// Closes expired active auctions (does NOT approve pending ones)
 router.post('/update-statuses', 
   authenticateToken, 
   requireRole('admin', 'rep'), 

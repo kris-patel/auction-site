@@ -1,7 +1,16 @@
+/**
+ * ============================================
+ * api.js
+ * ============================================
+ * Centralized API service layer
+ * Handles all HTTP requests to backend
+ */
+
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+// Create axios instance with base configuration
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
@@ -9,7 +18,7 @@ const axiosInstance = axios.create({
   }
 });
 
-// Add token to requests
+// Attach JWT token to all requests
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -19,14 +28,14 @@ axiosInstance.interceptors.request.use((config) => {
 });
 
 const api = {
-  // Auth
+  // Authentication endpoints
   register: (data) => axiosInstance.post('/auth/register', data),
   login: (email, password) => axiosInstance.post('/auth/login', { email, password }),
 
-  // Auctions
+  // Auction endpoints
   getAuctionDetail: (auctionId) => axiosInstance.get(`/auctions/${auctionId}`).then(res => res.data.auction),
   createAuction: (data) => axiosInstance.post('/auctions', data).then(res => res.data),
-
+  
   getAuctionsByStatus: async (status) => {
     const response = await axiosInstance.get(`/auctions/by-status?status=${status}`);
     return response.data.auctions;
@@ -53,24 +62,24 @@ const api = {
     return response.data.auctions;
   },
 
-  // Bids
+  // Bid endpoints
   placeBid: (auctionId, amount) => axiosInstance.post(`/bids/${auctionId}`, { bidAmount: amount }),
   getAuctionBids: (auctionId) => axiosInstance.get(`/bids/${auctionId}`).then(res => res.data.bids),
   getMyBids: () => axiosInstance.get('/bids/my-bids').then(res => res.data.bids),
 
-  // Admin
+  // Admin endpoints
   getUsers: () => axiosInstance.get('/admin/users').then(res => res.data),
   createRep: (data) => axiosInstance.post('/admin/create-rep', data).then(res => res.data),
   deleteUser: (userId) => axiosInstance.delete(`/admin/users/${userId}`),
 
-  // Rep
+  // Representative endpoints
   getRepUsers: () => axiosInstance.get('/rep/users').then(res => res.data.users),
   getRepAuctions: () => axiosInstance.get('/rep/auctions').then(res => res.data.auctions),
   
-  // ✅ CHANGED: Unified delete endpoint for both sellers and reps
+  // Delete auction (unified endpoint for sellers and reps)
   deleteAuction: (auctionId) => axiosInstance.delete(`/auctions/${auctionId}`),
 
-  // Image Upload
+  // Image upload endpoints
   uploadProfileImage: (imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);
@@ -99,6 +108,7 @@ const api = {
   setPrimaryImage: (imageId) => 
     axiosInstance.patch(`/upload/auction/${imageId}/primary`).then(res => res.data),
 
+  // Auction management
   updateAuction: (auctionId, data) => 
     axiosInstance.put(`/auctions/${auctionId}`, data).then(res => res.data),
 
@@ -108,6 +118,7 @@ const api = {
   updateAuctionStatus: (auctionId, status) => 
     axiosInstance.patch(`/rep/auction/${auctionId}/status`, { status }).then(res => res.data),
 
+  // Profile update endpoints
   updateProfileImage: (imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);

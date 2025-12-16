@@ -1,3 +1,11 @@
+/**
+ * ============================================
+ * auth.routes.js
+ * ============================================
+ * Routes for authentication and profile management
+ * Handles registration, login, and profile updates
+ */
+
 import express from 'express';
 import { register, login, getProfile } from '../controllers/auth.controller.js';
 import { 
@@ -10,14 +18,14 @@ import { uploadProfile } from '../config/cloudinary.js';
 
 const router = express.Router();
 
-// Public routes
+// Public authentication routes
 router.post('/register', register);
 router.post('/login', login);
 
-// Protected route
+// Protected profile routes
 router.get('/profile', authenticateToken, getProfile);
 
-// profile update routes
+// Profile update routes (authenticated)
 router.put('/profile/image', authenticateToken, uploadProfile.single('image'), updateProfileImage);
 router.put('/profile/username', authenticateToken, updateUsername);
 router.put('/profile/password', authenticateToken, updatePassword);

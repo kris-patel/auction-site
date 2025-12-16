@@ -1,3 +1,17 @@
+/**
+ * ============================================
+ * AdminDashboard.jsx
+ * ============================================
+ * Dashboard for administrators to manage the platform
+ * 
+ * Features:
+ * - View all users in the system
+ * - Create customer representative accounts
+ * - Delete user accounts
+ * - Filter and search users by role
+ * - View user statistics and activity
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Trash2 } from 'lucide-react';
 import { Alert } from '../common/Alert';

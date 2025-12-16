@@ -1,7 +1,15 @@
+/**
+ * Upload Controller
+ * Handles file uploads to Cloudinary (profile images and auction images)
+ */
+
 import prisma from '../config/database.js';
 import { deleteImage } from '../config/cloudinary.js';
 
-// Upload profile image
+/**
+ * Upload profile image for authenticated user
+ * Deletes old image before uploading new one
+ */
 export const uploadProfileImage = async (req, res) => {
   try {
     console.log('Upload profile image request received');
@@ -13,11 +21,11 @@ export const uploadProfileImage = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const imageUrl = req.file.path; // Cloudinary URL
+    const imageUrl = req.file.path; // Cloudinary URL from multer
 
     console.log('Image URL from Cloudinary:', imageUrl);
 
-    // Get user's old profile image to delete it
+    // Get user's old profile image
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { profileImage: true }
@@ -38,7 +46,7 @@ export const uploadProfileImage = async (req, res) => {
 
     console.log('Updated user:', updatedUser);
 
-    // Delete old image from Cloudinary if it exists
+    // Delete old image from Cloudinary
     if (user.profileImage) {
       const publicId = extractPublicId(user.profileImage);
       if (publicId) {
@@ -59,7 +67,10 @@ export const uploadProfileImage = async (req, res) => {
   }
 };
 
-// Upload auction images
+/**
+ * Upload multiple images for an auction
+ * First uploaded image is set as primary by default
+ */
 export const uploadAuctionImages = async (req, res) => {
   try {
     console.log('Upload auction images request received');
@@ -94,7 +105,7 @@ export const uploadAuctionImages = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Get current max display order
+    // Get current max display order for proper sequencing
     const lastImage = await prisma.auctionImage.findFirst({
       where: { auctionId },
       orderBy: { displayOrder: 'desc' }
@@ -102,12 +113,12 @@ export const uploadAuctionImages = async (req, res) => {
 
     const startOrder = lastImage ? lastImage.displayOrder + 1 : 0;
 
-    // Create image records
+    // Create image records with sequential display order
     const imageRecords = req.files.map((file, index) => ({
       auctionId,
       imageUrl: file.path,
       displayOrder: startOrder + index,
-      isPrimary: startOrder === 0 && index === 0
+      isPrimary: startOrder === 0 && index === 0 // First image is primary
     }));
 
     console.log('Creating image records:', imageRecords);
@@ -137,7 +148,10 @@ export const uploadAuctionImages = async (req, res) => {
   }
 };
 
-// Delete auction image
+/**
+ * Delete an auction image
+ * Removes from database and Cloudinary, reassigns primary if needed
+ */
 export const deleteAuctionImage = async (req, res) => {
   try {
     const { imageId } = req.params;
@@ -157,6 +171,7 @@ export const deleteAuctionImage = async (req, res) => {
       return res.status(404).json({ error: 'Image not found' });
     }
 
+    // Verify seller owns the auction
     if (image.auction.sellerId !== sellerId) {
       return res.status(403).json({ error: 'Not authorized' });
     }
@@ -167,7 +182,7 @@ export const deleteAuctionImage = async (req, res) => {
       await deleteImage(publicId);
     }
 
-    // If this was the primary image, make another image primary
+    // If deleting primary image, make next image primary
     if (image.isPrimary) {
       const nextImage = await prisma.auctionImage.findFirst({
         where: {
@@ -200,7 +215,10 @@ export const deleteAuctionImage = async (req, res) => {
   }
 };
 
-// Set primary image
+/**
+ * Set an image as primary for an auction
+ * Unsets current primary and sets new one
+ */
 export const setPrimaryImage = async (req, res) => {
   try {
     const { imageId } = req.params;
@@ -220,16 +238,19 @@ export const setPrimaryImage = async (req, res) => {
       return res.status(404).json({ error: 'Image not found' });
     }
 
+    // Verify seller owns the auction
     if (image.auction.sellerId !== sellerId) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Update all images for this auction
+    // Update all images for this auction in transaction
     await prisma.$transaction([
+      // Unset all primary flags
       prisma.auctionImage.updateMany({
         where: { auctionId: image.auctionId },
         data: { isPrimary: false }
       }),
+      // Set this image as primary
       prisma.auctionImage.update({
         where: { id: imageId },
         data: { isPrimary: true }
@@ -246,15 +267,17 @@ export const setPrimaryImage = async (req, res) => {
   }
 };
 
-// Helper function to extract public ID from Cloudinary URL
+/**
+ * Helper function to extract Cloudinary public ID from URL
+ * Format: https://res.cloudinary.com/{cloud}/image/upload/{folder}/{id}.{ext}
+ */
 const extractPublicId = (url) => {
   try {
-    // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{transformations}/{version}/{folder}/{public_id}.{format}
     const parts = url.split('/');
     const filename = parts[parts.length - 1];
     const publicIdWithFormat = filename.split('.')[0];
     
-    // Find the folder path (auction-platform/profiles or auction-platform/auctions)
+    // Extract folder path from URL
     const uploadIndex = parts.indexOf('upload');
     if (uploadIndex !== -1 && uploadIndex + 2 < parts.length) {
       const folder = parts.slice(uploadIndex + 1, -1).join('/');

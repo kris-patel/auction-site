@@ -1,6 +1,15 @@
+/**
+ * Admin Controller
+ * Handles administrative operations for user and auction management
+ */
+
 import prisma from '../config/database.js';
 import { hashPassword } from '../utils/bcrypt.js';
 
+/**
+ * Create a new customer representative
+ * @access Admin only
+ */
 export const createRep = async (req, res) => {
   try {
     const { username, email, password, region } = req.body;
@@ -28,9 +37,8 @@ export const createRep = async (req, res) => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create customer representative with profile in a transaction
+    // Create user and representative profile in transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create base user
       const user = await tx.user.create({
         data: {
           username,
@@ -40,7 +48,6 @@ export const createRep = async (req, res) => {
         }
       });
 
-      // Create representative profile
       await tx.representative.create({
         data: {
           userId: user.id,
@@ -69,6 +76,10 @@ export const createRep = async (req, res) => {
   }
 };
 
+/**
+ * Create a new admin account
+ * @access Admin only
+ */
 export const createAdmin = async (req, res) => {
   try {
     const { username, email, password, adminLevel, permissions } = req.body;
@@ -96,9 +107,8 @@ export const createAdmin = async (req, res) => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create admin with profile in a transaction
+    // Create admin user and profile in transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create base user
       const user = await tx.user.create({
         data: {
           username,
@@ -108,7 +118,6 @@ export const createAdmin = async (req, res) => {
         }
       });
 
-      // Create admin profile
       await tx.admin.create({
         data: {
           userId: user.id,
@@ -137,10 +146,15 @@ export const createAdmin = async (req, res) => {
   }
 };
 
+/**
+ * Get all users with optional filtering by role and active status
+ * @access Admin only
+ */
 export const getAllUsers = async (req, res) => {
   try {
     const { role, isActive } = req.query;
 
+    // Build filter object
     const where = {};
     if (role) where.role = role;
     if (isActive !== undefined) where.isActive = isActive === 'true';
@@ -195,11 +209,14 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+/**
+ * Deactivate user account (soft delete)
+ * @access Admin only
+ */
 export const deactivateUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id }
     });
@@ -208,12 +225,11 @@ export const deactivateUser = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent deactivating yourself
+    // Prevent self-deactivation
     if (user.id === req.user.id) {
       return res.status(400).json({ error: 'You cannot deactivate yourself' });
     }
 
-    // Soft delete (deactivate)
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { isActive: false },
@@ -236,11 +252,14 @@ export const deactivateUser = async (req, res) => {
   }
 };
 
+/**
+ * Reactivate previously deactivated user
+ * @access Admin only
+ */
 export const activateUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id }
     });
@@ -249,7 +268,6 @@ export const activateUser = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Activate user
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { isActive: true },
@@ -272,11 +290,14 @@ export const activateUser = async (req, res) => {
   }
 };
 
+/**
+ * Permanently delete user (hard delete with cascade)
+ * @access Admin only
+ */
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id }
     });
@@ -285,12 +306,11 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Prevent deleting yourself
+    // Prevent self-deletion
     if (user.id === req.user.id) {
       return res.status(400).json({ error: 'You cannot delete yourself' });
     }
 
-    // Delete user (this will cascade delete related data including role-specific profiles)
     await prisma.user.delete({
       where: { id }
     });
@@ -302,6 +322,10 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * Get all auctions with optional status filtering
+ * @access Admin only
+ */
 export const getAllAuctions = async (req, res) => {
   try {
     const { status } = req.query;

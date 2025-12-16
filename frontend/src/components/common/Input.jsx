@@ -1,3 +1,11 @@
+// ============================================
+// Input.jsx
+// ============================================
+/**
+ * Input - Form input component with label and error display
+ * Special handling for password fields with show/hide toggle
+ */
+
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -5,22 +13,27 @@ export const Input = ({ label, error, type = 'text', className = '', ...props })
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
 
-  // Toggle between 'password' and 'text' type
+  // Toggle between password and text type for visibility
   const inputType = isPassword && showPassword ? 'text' : type;
 
   return (
     <div className="space-y-1">
+      {/* Label */}
       {label && (
         <label className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
+      
+      {/* Input with password toggle */}
       <div className="relative">
         <input
           type={inputType}
           className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isPassword ? 'pr-10' : ''} ${className}`}
           {...props}
         />
+        
+        {/* Password visibility toggle button */}
         {isPassword && (
           <button
             type="button"
@@ -37,6 +50,8 @@ export const Input = ({ label, error, type = 'text', className = '', ...props })
           </button>
         )}
       </div>
+      
+      {/* Error message */}
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
