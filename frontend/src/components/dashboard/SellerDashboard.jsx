@@ -616,15 +616,3 @@ const SellerDashboard = () => {
 };
 
 export default SellerDashboard;
-
-
-// ------------------------------------------------------------------
-
-// This is a PARTIAL fix showing only the changes needed in the create auction form section
-
-// Add this helper function at the top of the SellerDashboard component:
-
-// REPLACE the handleSubmit function with this fixed version:
-
-
-// REPLACE the End Date Input field with this fixed version (around line 213):
